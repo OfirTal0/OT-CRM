@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N3cure CRM - Plastic Additives Solutions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body> 
+    <div class="app-container">
+        <div class="main-header">
+            <header class="header">
+                <div class="logo-container">
+                    <h1><a href="/">N3cure CRM</a></h1>
+                    <p>Cross-linking Solutions</p>
+                    <a href="{{ url_for('logout') }}" class="logout-link">Log out</a>
+                </div>
+                <a href="/"><img class="logoimg" src="static\img\logo.png" alt="n3cure_logo"></a>
+                
+            </header>
+            <nav class="navbar">
+                <button class="customer-list-btn">Customer List</button>
+                <button class="add-customer-btn">+ Add Customer</button>
+            </nav>
+        </div>
+
+        <div class="main-content">
+
+            <aside class="customer-list" style="display:none;">
+                <div class="search-container">
+                    <input type="search" placeholder="Search customers..." class="search-input">
+                </div>
+                <div class="customer-list-header">
+                    <h2>Customers</h2>
+                    <span class="close-list-view-btn">&times;</span>
+                </div>
+                <div class="customer-list-content">
+                    {% for customer in customers %}
+                    <form action="/customer_choosen" method="POST" class="customer-item" style="cursor: pointer;" onclick="this.submit(); setActive(this);">
+                        <h3>{{ customer[1] }}</h3>
+                        <p>{{ customer[2] }}</p>
+                        <input type="hidden" name="customer_id" value="{{ customer[0] }}">
+                    </form>
+                    {% endfor %}
+                </div>
+            </aside>
+            <button id="upButton" class="up-button" onclick="scrollToTop()">↑</button>
+
+            <div class="customer-details">
+                {% if selected_customer %}
+                <div class="customer-profile">
+                    <div class="profile-header">
+                        <h2>{{ selected_customer[1] }}</h2>
+                        <nav class="profile-nav">
+                            <a href="#information">Information</a>
+                            <a href="#contacts">Contacts</a>
+                            <a href="#orders">Orders</a>
+                            <a href="#meetings">Meetings</a>
+                            <a href="#updates">Updates</a>
+                        </nav>
+                        <button class="edit-details">Edit Details</button>
+                    </div>
+
+                    <form action="/update_customer_details" method="POST" id="edit-details-form" style="display:none;">
+                        <input type="hidden" name="customer_id" value="{{ selected_customer[0] }}">
+                
+                        <!-- Basic Information -->
+                        <section id="information" class="info-section">
+                            <h3>Company Information</h3>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <label for="name">Name:</label>
+                                    <input type="text" id="name" name="name" value="{{ selected_customer[1] }}" required>
+                                </div>
+                                <div class="info-item">
+                                    <label for="country">Country:</label>
+                                    <input type="text" id="country" name="country" value="{{ selected_customer[2] }}" required>
+                                </div>
+                                <div class="info-item">
+                                    <label for="address">Address:</label>
+                                    <input type="text" id="address" name="address" value="{{ selected_customer[3] }}">
+                                </div>
+                                <div class="info-item">
+                                    <label for="lead">Lead:</label>
+                                    <input type="text" id="lead" name="lead" value="{{ selected_customer[4] }}" required>
+                                </div>
+                                <div class="info-item">
+                                    <label for="status">Status:</label>
+                                    <select id="status" name="status" required>
+                                        <option value="customer" {% if selected_customer[5] == "customer" %}selected{% endif %}>Customer</option>
+                                        <option value="POC" {% if selected_customer[5] == "POC" %}selected{% endif %}>POC</option>
+                                        <option value="initial" {% if selected_customer[5] == "initial" %}selected{% endif %}>Initial Contact</option>
+                                        <option value="on_hold" {% if selected_customer[5] == "on_hold" %}selected{% endif %}>On Hold</option>
+                                        <option value="not_interested" {% if selected_customer[5] == "not_interested" %}selected{% endif %}>Not Interested</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Technical Data -->
+                        <section class="technical-section">
+                            <h3>Technical Data</h3>
+                            {% for tech in technical %}
+                            <div class="info-grid">
+                                <input type="hidden" name="technical_id_{{ loop.index }}" value="{{ tech[0] }}">
+                                <div class="info-item">
+                                    <label for="line_{{ loop.index }}">Line:</label>
+                                    <input type="text" id="line_{{ loop.index }}" name="line_{{ loop.index }}" value="{{ tech[2] }}">
+                                </div>
+                                <div class="info-item">
+                                    <label for="application_{{ loop.index }}">Application:</label>
+                                    <input type="text" id="application_{{ loop.index }}" name="application_{{ loop.index }}" value="{{ tech[3] }}">
+                                </div>
+                                <div class="info-item">
+                                    <label for="line_speed_{{ loop.index }}">Line Speed (m/min):</label>
+                                    <input type="number" id="line_speed_{{ loop.index }}" name="line_speed_{{ loop.index }}" value="{{ tech[4] }}">
+                                </div>
+                                <div class="info-item">
+                                    <label for="line_width_{{ loop.index }}">Line Width (mm):</label>
+                                    <input type="number" id="line_width_{{ loop.index }}" name="line_width_{{ loop.index }}" value="{{ tech[5] }}">
+                                </div>
+                                <div class="info-item">
+                                    <label for="curing_{{ loop.index }}">Curing:</label>
+                                    <input type="text" id="curing_{{ loop.index }}" name="curing_{{ loop.index }}" value="{{ tech[6] }}">
+                                </div>
+                                <div class="info-item">
+                                    <label for="targets_{{ loop.index }}">Targets:</label>
+                                    <input type="text" id="targets_{{ loop.index }}" name="targets_{{ loop.index }}" value="{{ tech[7] }}">
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </section>
+                
+                        <!-- Commercial Data -->
+                        <section class="commercial-section">
+                            <h3>Commercial Details</h3>
+                            {% for commercial in commercial %}
+                            <div class="info-grid">
+                                <input type="hidden" name="commercial_id_{{ loop.index }}" value="{{ commercial[0] }}">
+                                <div class="info-item">
+                                    <label for="potential_lines_{{ loop.index }}">Amount of Potential Lines:</label>
+                                    <input type="number" id="potential_lines_{{ loop.index }}" name="potential_lines_{{ loop.index }}" value="{{ commercial[3] }}">
+                                </div>
+                                <div class="info-item">
+                                    <label for="annual_volume_{{ loop.index }}">Annual Volume (kg):</label>
+                                    <input type="number" id="annual_volume_{{ loop.index }}" name="annual_volume_{{ loop.index }}" value="{{ commercial[2] }}">
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </section>
+                
+                        <button type="submit" class="submit-btn">Save Changes</button>
+                    </form>
+
+                <div class="display-profile">
+                    <!-- Basic Information -->
+                    <section class="info-section">
+                        <h3>Company Information</h3>
+                        <div class="info-grid">
+        
+                        <div class="info-item">
+                            <label>Country:</label>
+                            <p>{{ selected_customer[2] }}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Address:</label>
+                            <p>{{ selected_customer[3] }}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Lead:</label>
+                            <p>{{ selected_customer[4] }}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Status:</label>
+                            <p>{{ selected_customer[5] }}</p>
+                        </div>
+                    </div>
+        
+                    </section>
+
+                    <section class="technical-section">
+                    <h3>Technical Data</h3>
+                    <table class="data-table">
+                    <thead>
+                    <tr>
+                    <th>Line</th>
+                    <th>Line Speed (m/min)</th>
+                    <th>Line Width (mm)</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for tech in technical %}
+                    <div class="info-item">
+                        <label>Application:</label>
+                        <p>{{ tech[3] }}</p>
+                    </div>
+                    <div class="info-item">
+                        <label>Curing Status:</label>
+                        <p>{{ tech[6] }}</p>
+                    </div>
+                    <div class="info-item">
+                        <label>Targets:</label>
+                        <p>{{ tech[7] }}</p>
+                    </div>
+                    <tr>
+                    <td>{{ tech[2] }}</td>
+                    <td>{{ tech[4] }}</td>
+                    <td>{{ tech[5] }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                    </table>
+                    </section>
+
+                    <section class="commercial-section">
+                    <h3>Commercial Details</h3>
+                    <table class="data-table">
+                    <thead>
+                    <tr>
+                    <th>Amount of Potential Lines</th>
+                    <th>Annual Volume (kg)</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for commercial_detail in commercial %}
+                    <tr>
+                    <td>{{ commercial_detail[3] }}</td>
+                    <td>{{ commercial_detail[2] }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                    </table>
+                    </section>
+                </div>
+            </div>
+
+            <section id="contacts" class="contacts-section">
+                <div class="contacts-header">
+                    <h3>Contact Persons</h3>
+                    <button class="add-contact-btn" onclick="openContactModal()">+ Add Contact</button>
+                </div>
+                <div class="contacts-grid">
+                    {% for contact in contacts %}
+                    <div class="contact-card" id="contact-{{ contact[0] }}">
+                        <div class="edit-display">
+                            <h4>{{ contact[1] }}</h4>
+                            <p><strong>Phone:</strong> {{ contact[2] }}</p>
+                            <p><strong>Email:</strong> {{ contact[3] }}</p>
+                            <p><strong>Role:</strong> {{ contact[4] }}</p>
+                            <div style="display:flex; align-items:center; margin-top:20px;  justify-content:center">
+                            <button class="edit-btn" onclick="toggleEdit('contact', {{ contact[0] }})">Edit</button>
+                            <form action="/delete_contact/{{ contact[0] }}" method="POST" onsubmit="return confirmDelete(event)">
+                                <input type="hidden" name="customer_id" value="{{ selected_customer[0] }}">
+                                <button type="submit" class="delete-btn">Delete</button>
+                            </form>
+                            </div>
+                        </div>
+            
+                        <!-- Hidden Edit Contact Form -->
+                        <form class="edit-contact-form" action="/edit_contact" method="POST" style="display: none;">
+                            <input type="hidden" name="contact_id" value="{{ contact[0] }}">
+                            <input type="hidden" name="customer_id" value="{{ selected_customer[0] }}">
+                            <label for="contact_name_{{ contact[0] }}">Name:</label>
+                            <input type="text" id="contact_name_{{ contact[0] }}" name="contact_name" value="{{ contact[1] }}" required>
+                            
+                            <label for="contact_phone_{{ contact[0] }}">Phone:</label>
+                            <input type="text" id="contact_phone_{{ contact[0] }}" name="contact_phone" value="{{ contact[2] }}">
+                            
+                            <label for="contact_email_{{ contact[0] }}">Email:</label>
+                            <input type="email" id="contact_email_{{ contact[0] }}" name="contact_email" value="{{ contact[3] }}">
+                            
+                            <label for="contact_role_{{ contact[0] }}">Role:</label>
+                            <input type="text" id="contact_role_{{ contact[0] }}" name="contact_role" value="{{ contact[4] }}" required>
+                            
+                            <button type="submit" class="save-btn">Save</button>
+                            <button type="button" class="cancel-btn" onclick="toggleEdit('contact', {{ contact[0] }})">Cancel</button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <div class="timeline">
+                    <p>No contacts found for this customer.</p>
+                    </div>
+
+                    {% endfor %}
+                </div>
+                <button id="load-more-contact-btn" class="load-more-btn">Load More Contacts</button>
+
+
+            </section>
+            
+            <!-- Add Contact Modal -->
+            <div class="contact-modal" id="contactModal" style="display: none;">
+                <div class="modal-content">
+                    <span class="close-contact-btn" onclick="closeContactModal()">&times;</span>
+                    <h2>Add Contact</h2>
+                    <form action="/add_contact" method="POST">
+                        <input type="hidden" name="customer_id" value="{{ selected_customer[0] }}"> <!-- Add this line -->
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <label for="company">Company:</label>
+                                <input type="text" id="company" name="company" value="{{ selected_customer[1] }}" readonly>
+                            </div>
+                            <div class="info-item">
+                                <label for="contact_name">Contact Name:</label>
+                                <input type="text" id="contact_name" name="contact_name" required>
+                            </div>
+                            <div class="info-item">
+                                <label for="contact_email">Email:</label>
+                                <input type="email" id="contact_email" name="contact_email">
+                            </div>
+                            <div class="info-item">
+                                <label for="contact_phone">Phone:</label>
+                                <input type="text" id="contact_phone" name="contact_phone">
+                            </div>
+                            <div class="info-item">
+                                <label for="contact_role">Role:</label>
+                                <input type="text" id="contact_role" name="contact_role" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="submit-btn">Submit Contact</button>
+                    </form>
+                </div>
+            </div>
+
+            
+    <section  id="orders" class="orders-section">
+        <div class="orders-header">
+            <h3>Customer Orders</h3>
+            <button class="add-order-btn" onclick="openOrderModal()">+ Add Order</button>
+        </div>
+        <div class="timeline">
+            {% for order in orders %}
+            <div class="timeline-item" id="order-{{ order[0] }}">
+                <div class="timeline-date">{{ order[6] }}</div>
+                <div class="timeline-content">
+                    <div class="edit-display">
+                    <div style="display:flex; align-items:center; justify-content: space-between;">
+                        <h4>Material: {{ order[2] }}</h4>
+                        <div class="action-buttons">
+                            <button class="toggle-order-details-btn" id="order-btn-{{ order[0] }}" onclick="toggleOrderDetails({{ order[0] }})">Open More</button>
+                            <button class="edit-btn" onclick="toggleEdit('order', {{ order[0] }})">Edit</button>
+                            <form action="/delete_order/{{ order[0] }}" method="POST" onsubmit="return confirmDelete(event)">
+                                <input type="hidden" name="customer_id" value="{{ selected_customer[0] }}">
+                                <button type="submit" class="delete-btn">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                        <div class="timeline-details" id="details-order-{{ order[0] }}" style="display:none;">
+                            <p><strong>Order No.</strong> {{ order[7] }}</p>
+                            <p><strong>Amount:</strong> {{ order[3] }} kg</p>
+                            <p><strong>Goal:</strong> {{ order[4] }}</p>
+                            <p><strong>Notes:</strong> {{ order[5] }}</p>
+                            {% if order[8] %}
+                            <span><strong>Order File:</strong> <a href="{{ url_for('static', filename='uploads/' ~ order[8]) }}" target="_blank">View File</a></span>
+                            {% endif %}
+                            {% if order[9] %}
+                            <span><strong>Invoice File:</strong> <a href="{{ url_for('static', filename='uploads/' ~ order[9]) }}" target="_blank">View File</a></span>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                    <form class="edit-order-form" action="/edit_order" method="POST" enctype="multipart/form-data" style="display: none;">
+                        <input type="hidden" name="order_id" value="{{ order[0] }}">
+                        <input type="hidden" name="customer_id" value="{{ selected_customer[0] }}">
+                        <input type="date" name="date" value="{{ order[6] }}">
+                        <input type="text" placeholder="Order No" name="order_no" value="{{ order[7] }}">
+                        <input type="text" placeholder="Material" name="material" value="{{ order[2] }}">
+                        <input type="number" placeholder="Amount" name="amount" value="{{ order[3] }}">
+                        <input type="text" placeholder="Goal" name="goal" value="{{ order[4] }}">
+                        <textarea placeholder="Notes" name="notes">{{ order[5] }}</textarea>
+                
+                        <label for="order_file">Attach Order File:</label>
+                        <input type="file" name="order_file" id="order_file" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                
+                        <label for="invoice_file">Attach Invoice File:</label>
+                        <input type="file" name="invoice_file" id="invoice_file" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                
+                        <button type="submit" class="save-btn">Save</button>
+                        <button type="button" class="cancel-btn" onclick="toggleEdit('order', {{ order[0] }})">Cancel</button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <p>No orders found for this customer.</p>
+            {% endfor %}
+        </div>
+        <button id="load-more-order-btn" class="load-more-btn" onclick="loadMore('order', 3)">Load More Orders</button>
+
+    <div class="order-modal" id="orderModal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-order-btn" onclick="closeOrderModal()">&times;</span>
+            <h2>Add Order</h2>
+            <form action="/add_order" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="customer_id" value="{{ selected_customer[0] }}"> <!-- Add this line -->
+
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label for="company">Company:</label>
+                        <input type="text" id="company" name="company" value="{{ selected_customer[1] }}" readonly>
+                    </div>
+                    <div class="info-item">
+                        <label for="material">Material:</label>
+                        <input type="text" id="material" name="material" required>
+                    </div>
+                    <div class="info-item">
+                        <label for="order_no">Order No.:</label>
+                        <input type="text" id="order_no" name="order_no" required>
+                    </div>
+                    <div class="info-item">
+                        <label for="amount">Amount (kg):</label>
+                        <input type="number" id="amount" name="amount" required>
+                    </div>
+                    <div class="info-item">
+                        <label for="goal">Goal:</label>
+                        <input type="text" id="goal" name="goal">
+                    </div>
+                    <div class="info-item">
+                        <label for="notes">Notes:</label>
+                        <textarea id="notes" name="notes" rows="4"></textarea>
+                    </div>
+                    <div class="info-item">
+                        <label for="date">Date:</label>
+                        <input type="date" id="date" name="date" required>
+                    </div>
+                    <div class="info-item">
+                        <label for="order_file">Order File:</label>
+                        <input type="file" id="order_file" name="order_file" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                    </div>
+                    <div class="info-item">
+                        <label for="invoice_file">Invoice File:</label>
+                        <input type="file" id="invoice_file" name="invoice_file" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                    </div>
+                </div>
+                <button type="submit" class="submit-btn" >Submit Order</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<section id="meetings" class="meetings-section">
+    <div class="meetings-header">
+        <h3>Customer Meetings</h3>
+        <button class="add-meeting-btn">+ Add Meeting</button>
+    </div>
+    <div class="timeline">
+        {% for meeting in meetings %}
+        <div class="timeline-item" id="meeting-{{ meeting[0] }}">
+            <div class="timeline-date">{{ meeting[3] }}</div>
+            <div class="timeline-content">
+                <div class="edit-display">
+                    <div style="display:flex; align-items:center; justify-content: space-between;">
+                        <h4>Title: {{ meeting[2] }}</h4>
+                        <div class="action-buttons">
+                            <button class="toggle-meeting-details-btn" id="meeting-btn-{{ meeting[0] }}" onclick="toggleMeetingDetails({{ meeting[0] }})">Open More</button>
+                            <button class="edit-btn" onclick="toggleEdit('meeting', {{ meeting[0] }})">Edit</button>
+                            <form action="/delete_meeting/{{ meeting[0] }}" method="POST" onsubmit="return confirmDelete(event)">
+                                <input type="hidden" name="customer_id" value="{{ selected_customer[0] }}">
+                                <button type="submit" class="delete-btn">Delete</button>
+                            </form>
+                            <!-- <form action="/send_email/{{ meeting[0] }}" method="POST">
+                                <button type="submit">Send Meeting Email</button>
+                            </form> -->
+                        </div>
+                    </div>
+
+                    <div class="timeline-details" id="details-meeting-{{ meeting[0] }}" style="display:none;">
+                        <p><strong>Attendees:</strong> {{ meeting[4] }}</p>
+                        <p><strong>Action Items:</strong></p>
+                        <table class="action-items">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Responsible</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if meeting[6] %}
+                                    {% for action in meeting[6] %}
+                                    <tr>
+                                        <td>{{ action['item'] }}</td>
+                                        <td>{{ action['responsible'] }}</td>
+                                        <td>{{ action['due_date'] }}</td>
+                                        <td>
+                                            <span class="status {% if action['status'] == 'Pending' %}pending{% elif action['status'] == 'In Progress' %}in-progress{% elif action['status'] == 'Completed' %}completed{% else %}not-started{% endif %}">
+                                                {{ action['status'] }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4">No action items available.</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                        <p class="full-text"><strong>Summary:</strong> {{ meeting[5] }}</p>
+                    </div>
+                </div>
+
+                <form class="edit-meeting-form" action="/edit_meeting" method="POST" enctype="multipart/form-data" style="display: none;">
+                    <input type="hidden" name="meeting_id" value="{{ meeting[0] }}">
+                    <input type="hidden" name="customer_id" value="{{ selected_customer[0] }}">
+                    <input type="date" name="date" value="{{ meeting[3] }}">
+                    <input type="text" placeholder="Title" name="title" value="{{ meeting[2] }}">
+                    <input type="text" placeholder="Attendees" name="attendees" value="{{ meeting[4] }}">
+                    <textarea name="summary" placeholder="Summary">{{ meeting[5] }}</textarea>
+                    
+                    <div id="action-items-container">
+                        <h4>Action Items</h4>
+                        <table class="action-items-edit">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Responsible</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="action-items-table">
+                                {% if meeting[6] %}
+                                {% for action in meeting[6] %}
+                                <tr class="action-item-row">
+                                    <td><input type="text" name="action_item" value="{{ action['item'] }}" required></td>
+                                    <td><input type="text" name="responsible" value="{{ action['responsible'] }}" required></td>
+                                    <td><input type="date" name="due_date" value="{{ action['due_date'] }}" required></td>
+                                    <td>
+                                        <select name="status" required>
+                                            <option value="Pending" {% if action['status'] == 'Pending' %}selected{% endif %}>Pending</option>
+                                            <option value="In Progress" {% if action['status'] == 'In Progress' %}selected{% endif %}>In Progress</option>
+                                            <option value="Completed" {% if action['status'] == 'Completed' %}selected{% endif %}>Completed</option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="remove-action-item-btn" onclick="removeActionItem(this)">Remove</button>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr class="action-item-row"></tr>
+                                </tr>
+                                {% endfor %}
+                                {% endif %}
+                            </tbody>
+                        </table>
+                        <button type="button" id="add-action-item-btn" class="add-btn" style="margin-top: 1rem;">+ Add Action Item</button>
+                    </div>
+                    
+                    <button type="submit" class="save-btn">Save</button>
+                    <button type="button" class="cancel-btn" onclick="toggleEdit('meeting', {{ meeting[0] }})">Cancel</button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <p>No meetings found for this customer.</p>
+        {% endfor %}
+    </div>
+    <button id="load-more-meeting-btn" class="load-more-btn" onclick="loadMore('meeting', 3)">Load More Meetings</button>
+    <!-- Modal for adding new meetings -->
+    <div id="meeting-modal" class="meeting-modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close-meeting-btn" onclick="closeMeetingModal()">&times;</span>
+    
+            <h3>New Meeting</h3>
+            <form id="meeting-form" action="/add_meeting" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="customer_id" value="{{ selected_customer[0] }}">
+    
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label for="company">Company:</label>
+                        <input type="text" id="company" name="company" value="{{ selected_customer[1] }}" readonly>
+                    </div>
+                    <div class="info-item">
+                        <label for="title">Title:</label>
+                        <input type="text" id="meeting-title" name="title" required>
+                    </div>
+                    <div class="info-item">
+                        <label for="attendees">Attendees:</label>
+                        <input type="text" id="meeting-attendees" name="attendees" placeholder="Comma-separated names" required>
+                    </div>
+                    <div class="info-item">
+                        <label for="date">Date:</label>
+                        <input type="date" id="meeting-date" name="date" required>
+                    </div>
+                </div>
+    
+                <!-- Summary Section -->
+                <div class="summary-section">
+                    <label for="summary">Summary:</label>
+                    <textarea id="meeting-summary" name="summary" required></textarea>
+                </div>
+    
+                <!-- Action Items Section -->
+                <div id="action-items-container">
+                    <h4>Action Items</h4>
+                    <button type="button" id="add-action-item-btn">Add Action Item</button>
+                    <div id="action-items-list"></div>
+                </div>
+    
+                <!-- Submit Button -->
+                <button type="submit" class="submit-btn">Save Meeting</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- Updates -->
+<section id="updates" class="updates-section">
+    <div class="updates-header">
+        <h3>Customer Updates</h3>
+        <button class="add-update-btn" onclick="openUpdateModal()">+ Add Update</button>
+    </div>
+    <div class="timeline">
+        {% for update in updates %}
+        <div class="timeline-item" id="update-{{ update[0] }}">
+            <div class="timeline-date">{{ update[2] }}</div>
+            <div class="timeline-content">
+                <div class="edit-display">
+                    <div style="display:flex; align-items:center; justify-content: space-between;">
+                    <h4>Title: {{ update[7] }}</h4>
+                    <div class="action-buttons">
+                        <button class="toggle-update-details-btn" id="update-btn-{{ update[0] }}" onclick="toggleUpdateDetails({{ update[0] }})">Open More</button>
+                        <button class="edit-btn" onclick="toggleEdit('update', {{ update[0] }})">Edit</button>
+                        <form action="/delete_update/{{ update[0] }}" method="POST" onsubmit="return confirmDelete(event)">
+                            <input type="hidden" name="customer_id" value="{{ selected_customer[0] }}">
+                            <button type="submit" class="delete-btn">Delete</button>
+                        </form>
+                    </div>
+                    </div>
+                    <div class="timeline-details" id="details-update-{{ update[0] }}" style="display:none;">
+                        <p class="full-text"><strong>Update:</strong>{{ update[3] }}</p>
+                        <p><strong>Next Step:</strong> {{ update[4] }}</p>
+                        <p><strong>Responsible:</strong> {{ update[5] }}</p>
+                        {% if update[6] %}
+                        <p ><strong>Attached File:</strong> <a href="{{ url_for('static', filename='uploads/' ~ update[6]) }}" target="_blank">View File</a></p>
+                        {% endif %}                
+                    </div>
+
+                </div>
+                <form class="edit-update-form" action="/edit_update" method="POST" enctype="multipart/form-data" style="display: none;">
+                    <input type="hidden"name="update_id" value="{{ update[0] }}">
+                    <input type="hidden" name="customer_id" value="{{ selected_customer[0] }}">
+                    <input type="date" name="date" value="{{ update[2] }}">
+                    <input type="text"  placeholder="Title" name="title" value="{{ update[7] }}">
+                    <textarea placeholder="Update" name="content">{{ update[3] }}</textarea>
+                    <input type="text" placeholder="Next step" name="next_step" value="{{ update[4] }}">
+                    <input type="text" placeholder="Responsible" name="responsible" value="{{ update[5] }}">
+                    
+                    <label for="file">Attach File:</label>
+                    <input type="file" name="file" id="file" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                    
+                    <button type="submit" class="save-btn">Save</button>
+                    <button type="button" class="cancel-btn" onclick="toggleEdit('update', {{ update[0] }})">Cancel</button>
+                </form>
+            </div>
+        </div>
+        {% else %}
+        <p>No updates found for this customer.</p>
+        {% endfor %}
+    </div>
+    <button id="load-more-update-btn" class="load-more-btn" onclick="loadMore('update', 3)">Load More Updates</button>
+
+    <div class="update-modal" id="updateModal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeUpdateModal()">&times;</span>
+            <h2>Add Update</h2>
+            <form action="/add_update" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="customer_id" value="{{ selected_customer[0] }}"> <!-- Add this line -->
+
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label for="company">Company:</label>
+                        <input type="text" id="company" name="company" value="{{ selected_customer[1] }}" readonly>
+                    </div>
+                    <div class="info-item">
+                        <label for="title">Title</label>
+                        <textarea id="title" name="title" rows="4" required></textarea>
+                    </div>
+                    <div class="info-item">
+                        <label for="update">Update:</label>
+                        <textarea id="update" name="update" rows="4" required></textarea>
+                    </div>
+                    <div class="info-item">
+                        <label for="date">Date:</label>
+                        <input type="date" id="date" name="date" required>
+                    </div>
+                    <div class="info-item">
+                        <label for="next_step">Next Step:</label>
+                        <input type="text" id="next_step" name="next_step">
+                    </div>
+                    <div class="info-item">
+                        <label for="responsible">Responsible:</label>
+                        <input type="text" id="responsible" name="responsible">
+                    </div>
+                    <div class="info-item">
+                        <label for="file">Attach File:</label>
+                        <input type="file" id="file" name="file" accept=".pdf,.doc,.docx,.xls,.xlsx">
+                    </div>
+                </div>
+                <button type="submit" class="submit-btn">Submit Update</button>
+            </form>
+        </div>
+    </div>
+
+</section>
+
+ 
+</div>
+{% else %}
+<div class="customer-profile-default">
+<div class="action-items-display">
+    <h2>Action Items</h2>
+    <table class="action-items-display-table">
+        <thead>
+            <tr>
+                <th>Customer</th>
+                <th>Item</th>
+                <th>Responsible</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="action-items-table">
+            {% for meeting in meetings %}
+    {% for action in meeting[6] %}
+        <tr class="action-item-row">
+            <td>{{ meeting[1] }}</td>
+            <td>{{ action['item'] }}</td>
+            <td>{{ action['responsible'] }}</td>
+            <td>{{ action['due_date'] }}</td>
+            <td>
+                <span class="status 
+                {% if action['status'] == 'Pending' %}pending{% elif action['status'] == 'In Progress' %}in-progress{% elif action['status'] == 'Not Started' %}not-started{% elif action['status'] == 'Completed' %}completed{% endif %}
+                ">{{ action['status'] }}</span>
+            </td>
+            <td>
+                <!-- Form to send meeting ID and customer ID -->
+                <form method="POST" action="{{ url_for('customer_choosen') }}" class="go-to-action-item-form">
+                    <input type="hidden" name="customer_name" value="{{ meeting[1] }}"> <!-- Assuming meeting[1] is the customer_name -->
+                    <button type="submit" class="go-to-action-item-btn" title="Go to this action item">
+                        <span class="arrow">→</span>
+                    </button>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+{% endfor %}
+        </tbody>
+    </table>
+</div>
+</div>
+{% endif %}
+
+
+            </div>
+        
+            <!-- Add Customer Section -->
+            <div class="add-customer-section" style="display: none;">
+                <div class="customer-details">
+                    <div class="profile-header">
+                        <h2>Add New Customer</h2>
+                    </div>
+                    <form action="/add_customer" method="POST">
+                        <!-- Basic Information -->
+                        <section class="info-section">
+                            <h3>Company Information</h3>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <label for="name">Name:</label>
+                                    <input type="text" id="name" name="name" required>
+                                </div>
+                                <div class="info-item">
+                                    <label for="country">Country:</label>
+                                    <input type="text" id="country" name="country" required>
+                                </div>
+                                <div class="info-item">
+                                    <label for="address">Address:</label>
+                                    <input type="text" id="address" name="address">
+                                </div>
+                                <div class="info-item">
+                                    <label for="lead">Lead:</label>
+                                    <input type="text" id="lead" name="lead" required>
+                                </div>
+                                <div class="info-item">
+                                    <label for="status">Status:</label>
+                                    <select id="status" name="status" required>
+                                        <option value="customer">Customer</option>
+                                        <option value="POC">POC</option>
+                                        <option value="initial">Initial Contact</option>
+                                        <option value="on_hold">On Hold</option>
+                                        <option value="not_interested">Not Interested</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </section>
+                        <!-- Contacts -->
+                        <section class="contacts-section">
+                            <h3>Contact Information</h3>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <label for="contact_name">Contact Name:</label>
+                                    <input type="text" id="contact_name" name="contact_name">
+                                </div>
+                                <div class="info-item">
+                                    <label for="role">Role:</label>
+                                    <input type="text" id="role" name="role">
+                                </div>
+                                <div class="info-item">
+                                    <label for="email">Email:</label>
+                                    <input type="email" id="email" name="email">
+                                </div>
+                                <div class="info-item">
+                                    <label for="phone">Phone:</label>
+                                    <input type="tel" id="phone" name="phone">
+                                </div>
+                            </div>
+                        </section>
+                        <!-- Technical Data -->
+                        <section class="technical-section">
+                            <h3>Technical Data</h3>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <label for="line">Line:</label>
+                                    <input type="text" id="line" name="line">
+                                </div>
+                                <div class="info-item">
+                                    <label for="application">Application:</label>
+                                    <input type="text" id="application" name="application">
+                                </div>
+                                <div class="info-item">
+                                    <label for="line_speed">Line Speed (m/min):</label>
+                                    <input type="number" id="line_speed" name="line_speed">
+                                </div>
+                                <div class="info-item">
+                                    <label for="line_width">Line Width (mm):</label>
+                                    <input type="number" id="line_width" name="line_width">
+                                </div>
+                                <div class="info-item">
+                                    <label for="curing">Curing:</label>
+                                    <input type="text" id="curing" name="curing">
+                                </div>
+                                <div class="info-item">
+                                    <label for="targets">Targets:</label>
+                                    <input type="text" id="targets" name="targets">
+                                </div>
+                            </div>
+                        </section>
+                        <!-- Commercial Data -->
+                        <section class="commercial-section">
+                            <h3>Commercial Details</h3>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <label for="annual_volume">Annual Volume (kg):</label>
+                                    <input type="number" id="annual_volume" name="annual_volume">
+                                </div>
+                                <div class="info-item">
+                                    <label for="potential_lines">Amount of Potential Lines</label>
+                                    <input type="number" id="potential_lines" name="potential_lines">
+                                </div>
+                            </div>
+                        </section>
+                        <button type="submit" class="add-update-btn">Add Customer</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        function confirmDelete(event) {
+            // Show a confirmation dialog
+            const confirmation = confirm("Are you sure you want to delete this contact?");
+            
+            // If the user cancels the deletion, prevent the form submission
+            if (!confirmation) {
+                event.preventDefault();
+                return false;  // Prevent form submission
+            }
+            
+            // If the user confirms, allow form submission to proceed
+            return true;
+        }
+
+    </script>
+    <script src="{{ url_for('static', filename='main.js') }}">
+
+
+    </script>
+
+</body>
+</html>
+

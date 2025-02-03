@@ -1,0 +1,1098 @@
+:root {
+    --primary-color: #6B4E71;     /* Light Purple */
+    --secondary-color: #4A7C59;   /* Green */
+    --primary-light: #8C7B93;
+    --secondary-light: #6B9A7B;
+    --background-color: #f5f5f7;
+    --surface-color: #ffffff;
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --border-color: #e0e0e0;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+h1 a {
+    text-decoration: none;
+    color: white;
+  }
+
+.logoimg {
+    width: 200px;
+    height: auto;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+.navbar {
+    color: white;
+    background-color: var(--primary-color);
+    padding: 10px;
+    text-align: center;
+}
+.navbar button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    margin: 0 10px;
+    cursor: pointer;
+}
+.navbar button:hover {
+    background-color: #45a049;
+}
+
+/* Layout */
+.app-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-content {
+    display: flex;
+    flex: 1;
+    gap: 2rem;
+    padding: 2rem;
+    max-width: 1800px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+
+/* Header Styles */
+.header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+.logo-container h1 {
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.logo-container p {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.search-container {
+    flex: 0 1 400px;
+    margin-left: 35px;
+    margin-top: 20px;
+}
+
+.search-input {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--primary-color); /* Define border width, style, and color */
+    border-radius: 4px;
+    background-color: white;
+    color: var(--primary-color);
+    font-size: 1rem;
+}
+
+.search-input::placeholder {
+    color: var(--primary-color);
+}
+
+/* Customer List Styles */
+.customer-list {
+    flex: 0 0 300px;
+    background-color: var(--surface-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px var(--shadow-color);
+    height: fit-content;
+
+}
+
+.customer-list-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.customer-list-header h2 {
+    font-size: 1.2rem;
+    color: var(--text-primary);
+}
+
+.customer-list-content {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    display: flex  ;
+    flex-direction: column;
+}
+
+.customer-item {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.customer-item:hover {
+    background-color: #f8f8f8;
+}
+
+.customer-item.active {
+    background-color: #f0f0f0;
+    border-left: 4px solid var(--primary-color);
+}
+
+.customer-item h3 {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.customer-item p {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* Customer Details Styles */
+.customer-details {
+    flex: 1;
+    background-color: var(--surface-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px var(--shadow-color);
+    padding: 2rem;
+}
+
+
+.customer-profile {
+    margin: 0 auto;
+}
+
+.profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.profile-header h2 {
+    font-size: 1.8rem;
+    color: var(--primary-color);
+}
+
+/* Section Styles */
+.info-section,
+.contacts-section,
+.commercial-section,
+.technical-section,
+.orders-section, 
+.updates-section,
+.meetings-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background-color: #dadad988;
+    border-radius: 8px;
+    scroll-margin-top: 30vh; /* Adjust scroll offset */
+
+}
+
+.info-section h3,
+.contacts-section h3,
+.commercial-section h3,
+.technical-section h3,
+.orders-section h3,
+.updates-section h3,
+.meetings-header h3{
+    color: var(--secondary-color);
+    margin-bottom: 1rem;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.info-item label {
+    font-weight: 600;
+    color: black;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+/* Contact Cards */
+.contacts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 equal-width columns */
+    gap: 1rem;
+}
+
+.contact-card {
+    background-color: white;
+    padding: 1rem;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+.contact-card h4 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.contact-card p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+/* Table Styles */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.data-table th,
+.data-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    background-color: white;
+
+    
+}
+
+.data-table th {
+    background-color: #f5f5f5;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.data-table tr:hover {
+    background-color: #f8f8f8;
+}
+
+/* Updates Timeline */
+.updates-section {
+    margin-top: 2rem;
+}
+
+.updates-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+.action-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.toggle-order-details-btn,
+.toggle-meeting-details-btn,
+.toggle-update-details-btn {
+    border: none;
+    background-color: #007bff;
+    color: white;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.toggle-order-details-btn:hover,
+.toggle-meeting-details-btn:hover,
+.toggle-update-details-btn:hover {
+    background-color: #0056b3;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: var(--border-color);
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -2rem;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    border: 2px solid white;
+}
+
+.timeline-date {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.timeline-content {
+    background-color: white;
+    padding: 1rem;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+.timeline-content h4 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.timeline-meta {
+    display: flex;
+    flex-direction: column;
+    margin-top: 1rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* Button Styles */
+button {
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.add-customer-btn,
+.add-update-btn,
+.add-meeting-btn,
+.add-contact-btn {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.add-customer-btn:hover,
+.add-update-btn:hover,
+.add-meeting-btn:hover,
+.add-contact-btn:hover {
+    background-color: var(--secondary-light);
+}
+
+
+/* Attachment Styles */
+.attachment {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.attachment img {
+    width: 16px;
+    height: 16px;
+}
+
+.orders-section {
+    margin-top: 2rem;
+}
+
+.orders-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.meetings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.contacts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.add-order-btn {
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.add-order-btn:hover {
+    background-color: var(--secondary-light);
+}
+
+
+.edit-btn {
+    background-color: transparent;
+    color: var(--primary-color);
+    font-size: 0.8rem;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.edit-contact-btn {
+    background-color: transparent;
+    color: var(--primary-color);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.edit-btn:hover {
+    background-color: #f0f0f0;
+}
+
+.delete-btn {
+    background-color: transparent;
+    color: var(--primary-color);
+    font-size: 0.8rem;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+
+}
+.delete-contact-btn {
+    background-color: transparent;
+    color: var(--primary-color);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.delete-btn:hover {
+    background-color: #f0f0f0;
+}
+
+
+.add-customer-section {
+    display: none;
+    flex: 1;
+
+}
+
+
+.update-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: var(--surface-color);
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 2px 10px var(--shadow-color);
+    width: 100%;
+    max-width: 1000px;
+    max-height: 95vh; /* Limit the maximum height of the modal */
+    overflow-y: auto; /* Add scroll when content overflows */
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1vh;
+    align-items: center;
+}
+
+
+
+
+.close-btn,
+.close-order-btn,
+.close-meeting-btn,
+.close-list-view-btn  {
+    font-size: 30px;
+    cursor: pointer;
+    color: #333;
+    position: relative;
+}
+
+
+.order-modal,
+.meeting-modal, 
+.contact-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.submit-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    width: fit-content; /* Full width button */
+    display: block;
+    margin: 20px auto;
+}
+
+.submit-btn:hover {
+    background-color: var(--primary-light);
+}
+
+.action-item {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    justify-content: center;
+    align-items: center;
+}
+
+#action-items-container {
+    margin-top: 2rem;
+}
+
+#action-items-container h4 {
+    color: var(--secondary-color);
+    margin-bottom: 1rem;
+}
+
+#action-items-list {
+    margin-top: 1rem;
+}
+
+#add-action-item-btn {
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    margin-bottom: 1rem;
+}
+
+#add-action-item-btn:hover {
+    background-color: var(--secondary-light);
+}
+
+.edit-order-form,
+.edit-update-form {
+    
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.edit-display {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+form input,
+form select,
+form textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    box-sizing: border-box; /* Ensure padding does not affect width */
+}
+
+/* Textarea Styles */
+form textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+form button,
+form input[type="submit"] {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+} 
+
+
+form button:hover,
+form input[type="submit"]:hover {
+    background-color: #45a049; /* Slightly darker shade on hover */
+}
+
+/* Form Group Styles */
+.form-group {
+    margin-bottom: 20px;
+}
+
+/* Error Message Styles */
+.error-message {
+    color: red;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+/* Specific Form Class Styles */
+.edit-update-form,
+.edit-meeting-form,
+.edit-order-form,
+.edit-contact-form {
+    background-color: #e8e8e8; /* Subtle gray background */
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 25px;
+
+}
+
+.edit-update-form h2,
+.edit-meeting-form h2,
+.edit-order-form h2,
+.edit-contact-form h2 {
+    font-size: 24px;
+    margin-bottom: 15px;
+    color: #2c3e50;
+    text-align: center;
+}
+
+/* Section Titles */
+.edit-update-form .section-title,
+.edit-meeting-form .section-title,
+.edit-order-form .section-title,
+.edit-contact-form .section-title {
+    font-size: 18px;
+    margin-bottom: 10px;
+    color: #333;
+    text-transform: uppercase;
+    font-weight: bold;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 5px;
+}
+
+
+
+/* Display Content Styling */
+.edit-display h4 {
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.edit-display p {
+    margin: 0.25rem 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.edit-display span {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    margin-top: 0.5rem;
+}
+
+
+form label {
+    font-size: 16px;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+label {
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+input[type="text"], input[type="date"], textarea {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 1rem;
+    background-color: #f9f9f9;
+}
+
+textarea {
+    resize: vertical;
+}
+
+
+.close-contact-btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-contact-btn:hover,
+.close-contact-btn:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.text-container {
+    position: relative; /* Ensures proper positioning of child elements */
+    overflow: hidden; /* Ensures content doesn’t overflow */
+    width: 100%; /* Adjust to your layout's needs */
+    max-height: 200px; /* Optional: set a maximum height if required */
+    display: flex;
+    flex-direction: column; /* Aligns text vertically */
+}
+
+.text-container p {
+    margin: 0; /* Removes default margin for paragraphs */
+    word-wrap: break-word; /* Breaks long words to prevent overflow */
+    white-space: pre-wrap; /* Preserves spacing and line breaks */
+}
+
+.text-container,
+ .full-text {
+    width: 100%; /* Makes it responsive */
+    min-height: 150px; /* Sets a minimum height */
+    padding: 10px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    white-space: pre-wrap; /* Preserves spacing and new lines */
+    overflow-wrap: break-word; /* Wraps long lines */
+    line-height: 1.6;
+    resize: vertical;
+}
+
+.text-container,
+ .short-text {
+    display: block; /* Show short text by default */
+}
+
+.text-container button.read-more-btn {
+    margin-top: 10px; /* Adds some spacing */
+    align-self: flex-start; /* Aligns button to the start */
+    cursor: pointer;
+}
+
+.text-container button.read-more-btn {
+    margin-top: 5px; /* Reduce spacing above the button */
+    padding: 4px 8px; /* Smaller padding for a compact size */
+    font-size: 12px; /* Reduce font size */
+    line-height: 1.2; /* Adjust line height */
+    background-color: #007bff; /* Optional: Add a color for styling */
+    color: white; /* Optional: Text color */
+    border: none; /* Remove border */
+    border-radius: 4px; /* Rounded corners for a smaller look */
+    cursor: pointer; /* Show pointer cursor on hover */
+    display: inline-block; /* Ensures proper alignment */
+}
+
+.text-container button.read-more-btn:hover {
+    background-color: #0056b3; /* Optional: Darker shade on hover */
+}
+
+
+
+
+.summary-section {
+    margin-bottom: 2rem;
+}
+
+.summary-section textarea {
+    width: 100%;
+    height: 250px; /* Increase height to make it large */
+    padding: 1rem;
+    font-size: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: #f7f7f7;
+    resize: vertical;
+}
+
+.remove-action-item-btn {
+    background-color: #e74c3c; /* Red color to indicate remove */
+    color: white;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-left: 10px;
+    transition: background-color 0.3s ease;
+    height: fit-content;
+}
+
+.remove-action-item-btn:hover {
+    background-color: #c0392b; /* Darker red on hover */
+}
+
+.load-more-btn {
+    display: block;
+    margin: 1em auto;
+    padding: 0.5em 1em;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.load-more-btn:hover {
+    background-color: #0056b3;
+}
+
+.profile-nav {
+    display: flex;
+    gap: 15px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+/* Style each link */
+.profile-nav a {
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 16px;
+    color: #333;
+    padding: 4px 10px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Hover effect for links */
+.profile-nav a:hover {
+    background-color: #6B4E71; 
+    color: white;
+}
+
+
+/* Optional: Smooth scroll for anchor links */
+html {
+    scroll-behavior: smooth;
+}
+
+.up-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color:  #6B9A7B;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+    display: none; /* Initially hidden */
+    z-index: 1000;
+}
+
+.up-button:hover {
+    background-color: #4A7C59; 
+}
+
+.action-items {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.action-items th,
+.action-items td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+    font-size: smaller;
+
+}
+
+.action-items th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.action-items tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Status indicators */
+.status {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.status.pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status.in-progress {
+    background-color: #cce5ff;
+    color: #004085;
+}
+
+.status.not-started {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.status.completed {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.action-items-edit {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.action-items-edit th,
+.action-items-edit td {
+    border: 1px solid #ddd;
+    padding: 0.5rem;
+    text-align: left;
+}
+
+.action-items-edit th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+}
+
+.action-items-display {
+    padding: 2rem;
+    margin: 2rem auto;
+    max-width: 1000px;
+  }
+
+.action-section h2 {
+    color: #646cff;
+    margin-bottom: 1.5rem;
+  }
+  
+
+.action-items-display-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2rem;
+    border-radius: 8px;
+    overflow: hidden;
+    text-align: left;
+  }
+  
+  .action-items-display-table td {
+    padding: 1rem 1.5rem;
+    font-size: 0.875rem;
+    color: #374151;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .action-items-display-table th {
+    background-color: #f8f9fa;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+    font-weight: 600;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .action-items-display-table tr:hover {
+    background-color: #f9fafb;
+}
+
+.go-to-action-item-btn {
+    background-color: #007bff;
+    color: white;
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem; /* Add space between the text and the arrow */
+    transition: background-color 0.3s;
+}
+
+/* Arrow styling */
+.go-to-action-item-btn .arrow {
+    font-size: 1.2rem;
+}
+
+/* Button hover effect */
+.go-to-action-item-btn:hover {
+    background-color: #0056b3;
+}
+
+/* Optionally, a focus effect */
+.go-to-action-item-btn:focus {
+    outline: 2px solid #ffcc00;
+    outline-offset: 2px;
+}
+
+a.logout-link {
+    display: inline-block;      /* מאפשר להוסיף עיצוב כמו לכפתור */
+    color: white;               /* צבע טקסט */
+    text-align: center;         /* ממורכז */
+    text-decoration: none;      /* מסיר את הקו תחתון */
+    border-radius: 5px;         /* פינות מעוגלות */
+    font-size: 16px;            /* גודל פונט */
+    transition: background-color 0.3s ease; /* אפקט מעבר חלק */
+}

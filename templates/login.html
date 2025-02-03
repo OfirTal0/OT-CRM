@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N3cure CRM - Plastic Additives Solutions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
+</head>
+<body>
+    <div id="app">
+        <div class="login-container">
+          <h1>Login</h1>
+          <form action="/" method="POST" id="loginForm" novalidate onsubmit="return validateForm()">
+            <div class="form-group">
+              <label for="username">Username</label>
+              <input type="text" id="username" name="username" required>
+              <span class="error-message" id="usernameError"></span>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+                <span class="error-message" id="passwordError"></span>
+            </div>
+            <button type="submit">Login</button>
+          </form>
+
+          {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul>
+                {% for category, message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+        </div>
+      </div>
+
+<script>
+  function validateForm() {
+    let isValid = true;
+    let username = document.getElementById("username").value;
+    let password = document.getElementById("password").value;
+    let usernameError = document.getElementById("usernameError");
+    let passwordError = document.getElementById("passwordError");
+
+    // ניקוי הודעות שגיאה קודמות
+    usernameError.innerHTML = "";
+    passwordError.innerHTML = "";
+
+    // אימות שם משתמש
+    if (username.trim() === "") {
+      usernameError.innerHTML = "Username is required.";
+      isValid = false;
+    } else if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      usernameError.innerHTML = "Username must only contain letters, numbers, and underscores.";
+      isValid = false;
+    }
+
+    // אימות סיסמה
+    if (password.trim() === "") {
+      passwordError.innerHTML = "Password is required.";
+      isValid = false;
+    } else if (password.length < 6) {
+      passwordError.innerHTML = "Password must be at least 6 characters long.";
+      isValid = false;
+    }
+
+    return isValid; // מחזיר אם הטופס תקין
+  }
+</script>
+</body>
+</html>
