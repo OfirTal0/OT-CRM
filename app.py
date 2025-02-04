@@ -8,6 +8,7 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import random
+import shutil
 
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
@@ -25,6 +26,17 @@ PASSWORD = "n3cure!"
 
 # זמן תוקף הסשן (24 שעות)
 SESSION_TIMEOUT = timedelta(hours=24)
+
+@app.route('/api/download_db', methods=['GET'])
+def download_db():
+    return send_file('n3cure_crm.db', as_attachment=True)
+
+@app.route('/download_static', methods=['GET'])
+def download_static():
+    # Zip the static directory
+    shutil.make_archive('static_files', 'zip', 'static')
+    return send_file('static_files.zip', as_attachment=True)
+
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
