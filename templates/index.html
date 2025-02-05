@@ -15,7 +15,7 @@
                     <p>Cross-linking Solutions</p>
                     <a href="{{ url_for('logout') }}" class="logout-link">Log out</a>
                 </div>
-                <a href="/"><img class="logoimg" src="static\img\logo.png" alt="n3cure_logo"></a>
+                <a href="/"><img class="logoimg" src="static\img\Logo-white2.png" alt="n3cure_logo"></a>
                 
             </header>
             <nav class="navbar">
@@ -50,7 +50,7 @@
                 {% if selected_customer %}
                 <div class="customer-profile">
                     <div class="profile-header">
-                        <h2>{{ selected_customer[1] }}</h2>
+                        <h2 style="font-size: 3rem;">{{ selected_customer[1] }}</h2>
                         <nav class="profile-nav">
                             <a href="#information">Information</a>
                             <a href="#contacts">Contacts</a>
@@ -87,11 +87,11 @@
                                 <div class="info-item">
                                     <label for="status">Status:</label>
                                     <select id="status" name="status" required>
-                                        <option value="customer" {% if selected_customer[5] == "customer" %}selected{% endif %}>Customer</option>
+                                        <option value="Customer" {% if selected_customer[5] == "Customer" %}selected{% endif %}>Customer</option>
                                         <option value="POC" {% if selected_customer[5] == "POC" %}selected{% endif %}>POC</option>
-                                        <option value="initial" {% if selected_customer[5] == "initial" %}selected{% endif %}>Initial Contact</option>
-                                        <option value="on_hold" {% if selected_customer[5] == "on_hold" %}selected{% endif %}>On Hold</option>
-                                        <option value="not_interested" {% if selected_customer[5] == "not_interested" %}selected{% endif %}>Not Interested</option>
+                                        <option value="Inital Contact" {% if selected_customer[5] == "Inital Contact" %}selected{% endif %}>Initial Contact</option>
+                                        <option value="On hold" {% if selected_customer[5] == "On hold" %}selected{% endif %}>On Hold</option>
+                                        <option value="Not interested" {% if selected_customer[5] == "Not interested" %}selected{% endif %}>Not Interested</option>
                                     </select>
                                 </div>
                             </div>
@@ -125,8 +125,7 @@
                                 </div>
                                 <div class="info-item">
                                     <label for="targets_{{ loop.index }}">Targets:</label>
-                                    <input type="text" id="targets_{{ loop.index }}" name="targets_{{ loop.index }}" value="{{ tech[7] }}">
-                                </div>
+                                    <textarea id="targets_{{ loop.index }}" name="targets_{{ loop.index }}" rows="4" cols="50">{{ tech[7] }}</textarea>                                </div>
                             </div>
                             {% endfor %}
                         </section>
@@ -386,6 +385,9 @@
         </div>
         <button id="load-more-order-btn" class="load-more-btn" onclick="loadMore('order', 3)">Load More Orders</button>
 
+    </section>
+
+
     <div class="order-modal" id="orderModal" style="display: none;">
         <div class="modal-content">
             <span class="close-order-btn" onclick="closeOrderModal()">&times;</span>
@@ -435,7 +437,6 @@
             </form>
         </div>
     </div>
-</section>
 
 <section id="meetings" class="meetings-section">
     <div class="meetings-header">
@@ -558,7 +559,8 @@
         {% endfor %}
     </div>
     <button id="load-more-meeting-btn" class="load-more-btn" onclick="loadMore('meeting', 3)">Load More Meetings</button>
-    <!-- Modal for adding new meetings -->
+</section>
+
     <div id="meeting-modal" class="meeting-modal" style="display:none;">
         <div class="modal-content">
             <span class="close-meeting-btn" onclick="closeMeetingModal()">&times;</span>
@@ -604,7 +606,6 @@
             </form>
         </div>
     </div>
-</section>
 
 <!-- Updates -->
 <section id="updates" class="updates-section">
@@ -662,6 +663,8 @@
     </div>
     <button id="load-more-update-btn" class="load-more-btn" onclick="loadMore('update', 3)">Load More Updates</button>
 
+</section>
+
     <div class="update-modal" id="updateModal" style="display: none;">
         <div class="modal-content">
             <span class="close-btn" onclick="closeUpdateModal()">&times;</span>
@@ -704,8 +707,10 @@
         </div>
     </div>
 
-</section>
-
+<form action="/delete_customer" method="POST" onsubmit="return confirmDelete(event)">
+    <input type="hidden" name="customer_id" value="{{ selected_customer[0] }}">
+    <button type="submit" class="delete-customer-btn">Delete Customer</button>
+</form>
  
 </div>
 {% else %}
@@ -724,38 +729,40 @@
             </tr>
         </thead>
         <tbody id="action-items-table">
-            {% for meeting in meetings %}
-    {% for action in meeting[6] %}
+            {% for action_item in action_items %}
+        {% if action_item[5] != "Completed" %}
         <tr class="action-item-row">
-            <td>{{ meeting[1] }}</td>
-            <td>{{ action['item'] }}</td>
-            <td>{{ action['responsible'] }}</td>
-            <td>{{ action['due_date'] }}</td>
+            <td>{{ action_item[1] }}</td>
+            <td>{{ action_item[2] }}</td>
+            <td>{{ action_item[3] }}</td>
+            <td>{{ action_item[4] }}</td>
             <td>
                 <span class="status 
-                {% if action['status'] == 'Pending' %}pending{% elif action['status'] == 'In Progress' %}in-progress{% elif action['status'] == 'Not Started' %}not-started{% elif action['status'] == 'Completed' %}completed{% endif %}
-                ">{{ action['status'] }}</span>
+                {% if action_item[5] == 'Pending' %}pending{% elif action_item[5] == 'In Progress' %}in-progress{% elif action['status'] == 'Not Started' %}not-started{% elif action['status'] == 'Completed' %}completed{% endif %}
+                ">{{ action_item[5] }}</span>
             </td>
             <td>
                 <!-- Form to send meeting ID and customer ID -->
-                <form method="POST" action="{{ url_for('customer_choosen') }}" class="go-to-action-item-form">
-                    <input type="hidden" name="customer_name" value="{{ meeting[1] }}"> <!-- Assuming meeting[1] is the customer_name -->
+                <!-- <form method="POST" action="{{ url_for('customer_choosen') }}" class="go-to-action-item-form">
+                    <input type="hidden" name="customer_name" >
                     <button type="submit" class="go-to-action-item-btn" title="Go to this action item">
                         <span class="arrow">→</span>
                     </button>
-                </form>
+                </form> -->
             </td>
         </tr>
+        {% endif %}
     {% endfor %}
-{% endfor %}
         </tbody>
     </table>
+
 </div>
 </div>
+
 {% endif %}
 
 
-            </div>
+</div>
         
             <!-- Add Customer Section -->
             <div class="add-customer-section" style="display: none;">
@@ -795,30 +802,7 @@
                                     </select>
                                 </div>
                             </div>
-                        </section>
-                        <!-- Contacts -->
-                        <section class="contacts-section">
-                            <h3>Contact Information</h3>
-                            <div class="info-grid">
-                                <div class="info-item">
-                                    <label for="contact_name">Contact Name:</label>
-                                    <input type="text" id="contact_name" name="contact_name">
-                                </div>
-                                <div class="info-item">
-                                    <label for="role">Role:</label>
-                                    <input type="text" id="role" name="role">
-                                </div>
-                                <div class="info-item">
-                                    <label for="email">Email:</label>
-                                    <input type="email" id="email" name="email">
-                                </div>
-                                <div class="info-item">
-                                    <label for="phone">Phone:</label>
-                                    <input type="tel" id="phone" name="phone">
-                                </div>
-                            </div>
-                        </section>
-                        <!-- Technical Data -->
+                        </section>                        <!-- Technical Data -->
                         <section class="technical-section">
                             <h3>Technical Data</h3>
                             <div class="info-grid">
@@ -862,7 +846,7 @@
                                 </div>
                             </div>
                         </section>
-                        <button type="submit" class="add-update-btn">Add Customer</button>
+                        <button type="submit" class="add-customer-button">Add Customer</button>
                     </form>
                 </div>
             </div>
@@ -873,7 +857,7 @@
     <script>
         function confirmDelete(event) {
             // Show a confirmation dialog
-            const confirmation = confirm("Are you sure you want to delete this contact?");
+            const confirmation = confirm("Are you sure you want to delete this item?");
             
             // If the user cancels the deletion, prevent the form submission
             if (!confirmation) {

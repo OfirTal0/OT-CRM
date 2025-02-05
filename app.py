@@ -44,28 +44,25 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        # אימות שם משתמש וסיסמה (כמובן, יש לשדרג את זה עם מנגנון אבטחה חזק יותר)
         if username == "n3cure" and password == "n3cure!":
-            # שמירת זמן הלוגין בסשן
-            session['login_time'] = datetime.now().replace(tzinfo=None)  # הסרת אזור הזמן אם יש
-            return redirect(url_for('index'))  # הפניה לדף הבית אם ההתחברות הצליחה
+            session['login_time'] = datetime.now().replace(tzinfo=None)
+            return redirect(url_for('index'))
         else:
-            flash("שם משתמש או סיסמה שגויים")
+            flash("שם משתמש או סיסמה שגויים", "login_error")  # ← Assign category "login_error"
             return redirect(url_for('login'))
 
     if 'login_time' in session:
-        # לוודא שהתאריך יהיה naive
         login_time = session['login_time']
         if isinstance(login_time, datetime):
-            login_time = login_time.replace(tzinfo=None)  # הסרת אזור הזמן אם יש
+            login_time = login_time.replace(tzinfo=None)
 
         if datetime.now().replace(tzinfo=None) - login_time > SESSION_TIMEOUT:
-            # אם הזמן עבר 24 שעות, מחיקת הסשן
             session.pop('login_time', None)
-            flash('הסשן פג, יש להיכנס שוב')
+            flash('הסשן פג, יש להיכנס שוב', "session_expired")  # ← Different category
             return redirect(url_for('login'))
+
         return redirect(url_for('index'))
-    
+
     return render_template('login.html')
 
 
@@ -95,21 +92,23 @@ def query(sql: str = "", params: tuple = (), db_name=DATABASE_PATH):
 @app.route('/index', methods=['GET', 'POST'])
 def index():
 
-    customers = query("SELECT * FROM customers")
-    meetings = query(f"SELECT * FROM meetings ORDER BY date DESC")
+    customers = query("SELECT * FROM customers ORDER BY name ASC")
+    action_items = query(f"SELECT * FROM action_items")
 
-    # Convert meetings to a mutable format and deserialize the action_items JSON
-    updated_meetings = []
-    for meeting in meetings:
-        meeting_list = list(meeting)  # Convert tuple to list
-        if meeting_list[6]:  # Assuming action_items is at index 6
-            try:
-                meeting_list[6] = json.loads(meeting_list[6])  # Deserialize JSON
-            except json.JSONDecodeError:
-                meeting_list[6] = []  # Default to an empty list if JSON is invalid
-        updated_meetings.append(tuple(meeting_list))  # Convert back to tuple if necessary
+    # meetings = query(f"SELECT * FROM meetings ORDER BY date DESC")
 
-    return render_template('index.html', customers=customers,meetings=updated_meetings)
+    # # Convert meetings to a mutable format and deserialize the action_items JSON
+    # updated_meetings = []
+    # for meeting in meetings:
+    #     meeting_list = list(meeting)  # Convert tuple to list
+    #     if meeting_list[6]:  # Assuming action_items is at index 6
+    #         try:
+    #             meeting_list[6] = json.loads(meeting_list[6])  # Deserialize JSON
+    #         except json.JSONDecodeError:
+    #             meeting_list[6] = []  # Default to an empty list if JSON is invalid
+    #     updated_meetings.append(tuple(meeting_list))  # Convert back to tuple if necessary
+
+    return render_template('index.html', customers=customers,action_items=action_items)
 
 @app.route('/customer_choosen', methods=['POST', 'GET'])
 def customer_choosen():
@@ -166,7 +165,7 @@ def customer_choosen():
     # Redirect with anchor to #meeting section
     return render_template(
         'index.html',
-        customers=query("SELECT * FROM customers"),
+        customers=query("SELECT * FROM customers ORDER BY name ASC"),
         selected_customer=customer[0],
         contacts=contacts,
         updates=updates,
@@ -176,6 +175,8 @@ def customer_choosen():
         meetings=updated_meetings,
     )
 
+
+
 @app.route('/add_customer', methods=['GET','POST'])
 def add_customer():
     # Get data from the form
@@ -183,11 +184,7 @@ def add_customer():
     country = request.form.get('country').title()
     address = request.form.get('address')
     lead = request.form.get('lead').capitalize()
-    status = request.form.get('status').capitalize()
-    contact_name = request.form.get('contact_name').title()
-    role = request.form.get('role').capitalize()
-    email = request.form.get('email')
-    phone = request.form.get('phone')
+    status = request.form.get('status')
     
     line = request.form.get('line').capitalize()
     application = request.form.get('application').capitalize()
@@ -204,12 +201,6 @@ def add_customer():
     INSERT INTO customers (Name, Country, Address, Lead, Status) VALUES (?, ?, ?, ?, ?)
     """
     query(customer_query, (name, country, address, lead, status))
-
-    # Insert into the contacts table
-    contact_query = """
-    INSERT INTO contacts (name, phone, email, role, company) VALUES (?, ?, ?, ?, ?)
-    """
-    query(contact_query, (contact_name, phone, email, role, name))
 
     # Insert into the technical table
     technical_query = """
@@ -237,7 +228,7 @@ def add_update():
     responsible = request.form.get('responsible').capitalize()
     date = request.form.get('date')
     file = request.files.get('file')
-    title= request.form.get('title').capitalize() 
+    title= request.form.get('title').title()
 
     file_name = None
     if file:
@@ -363,6 +354,13 @@ def edit_order():
     flash("Order edited successfully.")
     return redirect(f'/customer_choosen?customer_id={request.form.get("customer_id")}')
 
+@app.route('/delete_customer', methods=['POST'])
+def delete_customer():
+    customer_id = request.form.get('customer_id')
+    query("DELETE FROM customers WHERE id = ?", (customer_id,))
+    return redirect(url_for('index'))  
+    
+# Update technical
 
 @app.route('/update_customer_details', methods=['POST'])
 def update_customer_details():
@@ -371,7 +369,7 @@ def update_customer_details():
     country = request.form.get('country').title()
     address = request.form.get('address')
     lead = request.form.get('lead').title()
-    status = request.form.get('status').title()
+    status = request.form.get('status')
 
     # Update customer details
     query("""
@@ -447,7 +445,7 @@ def delete_contact(contact_id):
 def add_meeting():
     customer_id = request.form.get('customer_id')
     company = request.form.get('company')
-    title = request.form.get('title').capitalize()
+    title = request.form.get('title').title()
     attendees = request.form.get('attendees')
     date = request.form.get('date')
     summary = request.form.get('summary').capitalize()
@@ -524,7 +522,7 @@ def edit_contact():
 @app.route('/edit_meeting', methods=['POST'])
 def edit_meeting():
     meeting_id = request.form.get('meeting_id')
-    title = request.form.get('title').capitalize()
+    title = request.form.get('title').title()
     date = request.form.get('date')
     attendees = request.form.get('attendees')
     summary = request.form.get('summary').capitalize()

@@ -63,8 +63,8 @@ body {
 .main-content {
     display: flex;
     flex: 1;
-    gap: 2rem;
-    padding: 2rem;
+    gap: 1.5rem;
+    padding: 1rem;
     max-width: 1800px;
     margin: 0 auto;
     width: 100%;
@@ -117,13 +117,10 @@ body {
     background-color: var(--surface-color);
     border-radius: 8px;
     box-shadow: 0 2px 4px var(--shadow-color);
-    height: fit-content;
-
 }
 
 .customer-list-header {
     padding: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -135,7 +132,7 @@ body {
 }
 
 .customer-list-content {
-    max-height: calc(100vh - 200px);
+    /* max-height: calc(100vh - 200px); */
     overflow-y: auto;
     display: flex  ;
     flex-direction: column;
@@ -150,6 +147,8 @@ body {
 
 .customer-item:hover {
     background-color: #f8f8f8;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
 }
 
 .customer-item.active {
@@ -160,6 +159,7 @@ body {
 .customer-item h3 {
     font-size: 1rem;
     margin-bottom: 0.25rem;
+
 }
 
 .customer-item p {
@@ -173,7 +173,7 @@ body {
     background-color: var(--surface-color);
     border-radius: 8px;
     box-shadow: 0 2px 4px var(--shadow-color);
-    padding: 2rem;
+    padding: 1.5rem;
 }
 
 
@@ -201,13 +201,26 @@ body {
 .orders-section, 
 .updates-section,
 .meetings-section {
+    background-color: var(--background-color);
+    border-radius: 1rem;
+    padding: 2rem;
     margin-bottom: 2rem;
-    padding: 1.5rem;
-    background-color: #dadad988;
-    border-radius: 8px;
-    scroll-margin-top: 30vh; /* Adjust scroll offset */
+    box-shadow: var(--shadow);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 
 }
+
+.info-section:hover,
+.contacts-section:hover,
+.commercial-section:hover,
+.technical-section:hover,
+.orders-section:hover, 
+.updates-section:hover,
+.meetings-section:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
 
 .info-section h3,
 .contacts-section h3,
@@ -216,8 +229,17 @@ body {
 .orders-section h3,
 .updates-section h3,
 .meetings-header h3{
-    color: var(--secondary-color);
+    /* color: var(--secondary-color);
     margin-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color); */
+    margin-top: 0;
+    color: var(--text-color);
+    font-size: 1.5rem;
+    font-weight: 600;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
+
 }
 
 .info-grid {
@@ -241,22 +263,36 @@ body {
 }
 
 .contact-card {
-    background-color: white;
-    padding: 1rem;
-    border-radius: 6px;
-    box-shadow: 0 1px 3px var(--shadow-color);
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
 }
 
-.contact-card h4 {
+.contact-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.contact-card h3 {
+    margin-top: 0;
     color: var(--primary-color);
-    margin-bottom: 0.5rem;
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
 }
 
 .contact-card p {
-    font-size: 0.9rem;
+    margin: 0.5rem 0;
     color: var(--text-secondary);
-    margin-bottom: 0.25rem;
 }
+
+.contact-card strong {
+    color: var(--text-color);
+    font-weight: 500;
+}
+
 
 /* Table Styles */
 .data-table {
@@ -295,6 +331,7 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
+
 }
 
 .timeline {
@@ -588,6 +625,38 @@ button {
 
 .submit-btn:hover {
     background-color: var(--primary-light);
+}
+
+.add-customer-button {
+    background-color:#4A7C59; 
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    width: fit-content; /* Full width button */
+    display: block;
+    margin: 20px auto;
+}
+
+.add-customer-button:hover {
+    background-color:rgba(163, 6, 6, 0.326);
+}
+
+.delete-customer-btn {
+    background-color:rgba(163, 6, 6, 0.644);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    width: fit-content; /* Full width button */
+    display: block;
+    margin: 20px auto;
+}
+
+.delete-customer-btn:hover {
+    background-color:rgba(163, 6, 6, 0.326);
 }
 
 .action-item {
@@ -899,17 +968,20 @@ textarea {
     gap: 15px;
     margin-top: 15px;
     margin-bottom: 15px;
+
 }
 
 /* Style each link */
 .profile-nav a {
     text-decoration: none;
-    font-weight: bold;
-    font-size: 16px;
-    color: #333;
     padding: 4px 10px;
     border-radius: 5px;
     transition: background-color 0.3s ease, color 0.3s ease;
+    color: var(--text-color);
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-bottom: 2px solid var(--border-color);
+
 }
 
 /* Hover effect for links */
