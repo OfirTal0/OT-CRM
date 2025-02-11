@@ -95,25 +95,14 @@ def index():
     customers = query("SELECT * FROM customers ORDER BY name ASC")
     action_items = query(f"SELECT * FROM action_items")
 
-    # meetings = query(f"SELECT * FROM meetings ORDER BY date DESC")
-
-    # # Convert meetings to a mutable format and deserialize the action_items JSON
-    # updated_meetings = []
-    # for meeting in meetings:
-    #     meeting_list = list(meeting)  # Convert tuple to list
-    #     if meeting_list[6]:  # Assuming action_items is at index 6
-    #         try:
-    #             meeting_list[6] = json.loads(meeting_list[6])  # Deserialize JSON
-    #         except json.JSONDecodeError:
-    #             meeting_list[6] = []  # Default to an empty list if JSON is invalid
-    #     updated_meetings.append(tuple(meeting_list))  # Convert back to tuple if necessary
-
     return render_template('index.html', customers=customers,action_items=action_items)
 
 @app.route('/customer_choosen', methods=['POST', 'GET'])
 def customer_choosen():
     customer_id = request.form.get('customer_id') or request.args.get('customer_id')
     customer_name = request.form.get('customer_name') or request.args.get('customer_name')
+    item_category =request.form.get('item_category')or request.args.get('item_category')
+    category_id = request.form.get('category_id')  or request.args.get('category_id')
 
     # If customer_name is provided, query for customer_id
     if not customer_id and customer_name:
@@ -139,17 +128,6 @@ def customer_choosen():
     meetings_query = "SELECT * FROM meetings WHERE company = ? ORDER BY date DESC"
     meetings = query(meetings_query, (customer[0][1],))
 
-    # Convert meetings to a mutable format and deserialize the action_items JSON
-    updated_meetings = []
-    for meeting in meetings:
-        meeting_list = list(meeting)
-        if meeting_list[6]:
-            try:
-                meeting_list[6] = json.loads(meeting_list[6])  # Deserialize JSON
-            except json.JSONDecodeError:
-                meeting_list[6] = []  # Default to an empty list if JSON is invalid
-        updated_meetings.append(tuple(meeting_list))
-
     updates_query = "SELECT * FROM updates WHERE company = ? ORDER BY date DESC"
     updates = query(updates_query, (customer[0][1],))
 
@@ -162,6 +140,10 @@ def customer_choosen():
     orders_query = "SELECT * FROM orders WHERE company = ? ORDER BY date DESC"
     orders = query(orders_query, (customer[0][1],))
 
+    action_items_query = "SELECT * FROM action_items WHERE customer = ?"
+    action_items = query(action_items_query, (customer[0][1],))
+
+
     # Redirect with anchor to #meeting section
     return render_template(
         'index.html',
@@ -172,9 +154,12 @@ def customer_choosen():
         technical=technical,
         commercial=commercial,
         orders=orders,
-        meetings=updated_meetings,
-    )
+        meetings=meetings,
+        category_id=category_id,
+        item_category= item_category,
+        action_items=action_items  # Passing action items to the template
 
+    )
 
 
 @app.route('/add_customer', methods=['GET','POST'])
@@ -185,6 +170,15 @@ def add_customer():
     address = request.form.get('address')
     lead = request.form.get('lead').capitalize()
     status = request.form.get('status')
+    sales_rep = request.form.get('sales_rep').title()
+    start_date = request.form.get('start_date')
+    NDA_file = request.files.get('nda_file')
+
+    NDA_file_name = None
+    if NDA_file:
+        NDA_file_name = secure_filename(f"{name}_NDA_{NDA_file.filename}")
+        NDA_file_path = os.path.join(app.config['UPLOAD_FOLDER'], NDA_file_name)
+        NDA_file.save(NDA_file_path)
     
     line = request.form.get('line').capitalize()
     application = request.form.get('application').capitalize()
@@ -198,9 +192,9 @@ def add_customer():
 
     # Insert into the customers table
     customer_query = """
-    INSERT INTO customers (Name, Country, Address, Lead, Status) VALUES (?, ?, ?, ?, ?)
+    INSERT INTO customers (Name, Country, Address, Lead, Status, sales_rep, start_date, NDA_file) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """
-    query(customer_query, (name, country, address, lead, status))
+    query(customer_query, (name, country, address, lead, status, sales_rep, start_date, NDA_file_name))
 
     # Insert into the technical table
     technical_query = """
@@ -225,10 +219,10 @@ def add_update():
     company = request.form.get('company').capitalize()
     content = request.form.get('update').capitalize()
     next_step = request.form.get('next_step').capitalize()
-    responsible = request.form.get('responsible').capitalize()
     date = request.form.get('date')
     file = request.files.get('file')
     title= request.form.get('title').title()
+    action_items = request.form.get('update_action_items')
 
     file_name = None
     if file:
@@ -238,10 +232,27 @@ def add_update():
 
     # Insert into the updates table
     update_query = """
-    INSERT INTO updates (company, date, content, next_step, responsible, file, title)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO updates (company, date, content, next_step, file, title)
+    VALUES (?, ?, ?, ?, ?, ?)
     """
-    query(update_query, (company, date, content, next_step, responsible, file_name, title))
+    query(update_query, (company, date, content, next_step, file_name, title))
+
+    fetch_update_id_query = """
+            SELECT id FROM updates
+            WHERE company = ? AND title = ? AND date = ?
+            ORDER BY id DESC LIMIT 1
+        """
+    result = query(fetch_update_id_query, (company, title, date))
+        
+    if result:
+        update_id = result[0][0]  # Extract the ID
+    else:
+        print("Error: Meeting ID not found")
+        return "Error retrieving meeting ID", 500  # Handle error properly
+        
+    if action_items:
+        item_category = "update"
+        add_action_items(action_items,item_category, update_id)
 
     flash(f"Update for {company} added successfully.")
     return redirect(f'/customer_choosen?customer_id={customer_id}')
@@ -370,13 +381,27 @@ def update_customer_details():
     address = request.form.get('address')
     lead = request.form.get('lead').title()
     status = request.form.get('status')
+    sales_rep = request.form.get('sales_rep').title()
+    start_date = request.form.get('start_date')
+    NDA_file = request.files.get('nda_file')
+
+
+    current_nda_file = query(f"SELECT nda_file FROM customers WHERE id = {customer_id} ")
+    current_file_data = current_nda_file[0][0]
+
+    NDA_file_name = None
+    if NDA_file:
+        NDA_file_name = secure_filename(f"{name}_NDA_{NDA_file.filename}")
+        NDA_file_path = os.path.join(app.config['UPLOAD_FOLDER'], NDA_file_name)
+        NDA_file.save(NDA_file_path)
+        current_file_data = NDA_file_name
 
     # Update customer details
     query("""
         UPDATE customers
-        SET Name = ?, Country = ?, Address = ?, Lead = ?, Status = ?
+        SET Name = ?, Country = ?, Address = ?, Lead = ?, Status = ?, sales_rep = ?, start_date = ?, NDA_file = ?
         WHERE id = ?
-    """, (name, country, address, lead, status, customer_id))
+    """, (name, country, address, lead, status, sales_rep, start_date, current_file_data, customer_id))
 
     
     # Update technical data
@@ -441,6 +466,8 @@ def delete_contact(contact_id):
 
     return redirect(f'/customer_choosen?customer_id={customer_id}')
 
+
+
 @app.route('/add_meeting', methods=['POST'])
 def add_meeting():
     customer_id = request.form.get('customer_id')
@@ -452,26 +479,71 @@ def add_meeting():
     
     # Get the action items from the form (it will be a JSON string)
     action_items = request.form.get('action_items')
-    
-    # Store action_items as JSON directly in the database
-    action_items_json = action_items if action_items else "[]"
 
     # Prepare the SQL query to insert the meeting details
     meeting_query = """
-        INSERT INTO meetings (company, title, date, attendees, summary, action_items)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO meetings (company, title, date, attendees, summary)
+        VALUES (?, ?, ?, ?, ?)
+    """
+
+    query(meeting_query, (company, title, date, attendees, summary))
+
+        # Retrieve the last inserted meeting by filtering with unique values
+    fetch_meeting_id_query = """
+        SELECT id FROM meetings
+        WHERE company = ? AND title = ? AND date = ?
+        ORDER BY id DESC LIMIT 1
+    """
+    result = query(fetch_meeting_id_query, (company, title, date))
+    
+    if result:
+        meeting_id = result[0][0]  # Extract the ID
+    else:
+        print("Error: Meeting ID not found")
+        return "Error retrieving meeting ID", 500  # Handle error properly
+    
+    if action_items:
+        item_category = "meeting"
+        add_action_items(action_items,item_category, meeting_id)
+
+    return redirect(f'/customer_choosen?customer_id={customer_id}')
+
+def add_action_items(action_items,item_category, meeting_id):
+    # Parse action_items from JSON string to a list of dictionaries
+    action_items = json.loads(action_items)
+    
+    action_item_query = """
+    INSERT INTO action_items (customer, item, responsible, due_date, status, item_category, category_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
     """
     
-    # Execute the query with all the form data, including the action_items JSON
-    query(meeting_query, (company, title, date, attendees, summary, action_items_json))
+    # Loop through each action item and insert it into the action_items table
+    for item in action_items:
+        query(action_item_query, (
+            item['customer'],
+            item['item'],
+            item['responsible'],
+            item['due_date'],
+            item['status'],
+            item_category,
+            meeting_id  # Use the meeting_id as category_id
+        ))
 
-    # Return a success response (redirect to the customer page)
-    return redirect(f'/customer_choosen?customer_id={customer_id}')
+@app.route('/delete_action_item/<int:action_item_id>', methods=['POST'])
+def delete_action_item(action_item_id):
+    delete_query = "DELETE FROM action_items WHERE id = ?"
+    query(delete_query, (action_item_id,))
+    return redirect(url_for('index'))
+
 
 @app.route('/delete_meeting/<int:meeting_id>', methods=['POST'])
 def delete_meeting(meeting_id):
     # Delete the meeting from the database
     customer_id = request.form.get('customer_id')
+
+    delete_action_items_query = "DELETE FROM action_items WHERE category_id = ? AND item_category = 'meeting'"
+    query(delete_action_items_query, (meeting_id,))
+
     delete_query = "DELETE FROM meetings WHERE id = ?"
     query(delete_query, (meeting_id,))
 
@@ -490,6 +562,10 @@ def deleteorder(order_id):
 @app.route('/delete_update/<int:update_id>', methods=['POST'])
 def deleteupdate(update_id):
     customer_id = request.form.get('customer_id')
+
+    delete_action_items_query = "DELETE FROM action_items WHERE category_id = ? AND item_category = 'update'"
+    query(delete_action_items_query, (update_id,))
+
     delete_query = "DELETE FROM updates WHERE id = ?"
     query(delete_query, (update_id,))
 
@@ -528,35 +604,44 @@ def edit_meeting():
     summary = request.form.get('summary').capitalize()
     customer_id = request.form.get('customer_id')
 
-    # Get action items from the form and format them as a list of dictionaries
-    action_items = []
-    action_item_data = request.form.getlist('action_item')  # Get action items list
-    responsible_data = request.form.getlist('responsible')  # Get responsible persons list
-    due_date_data = request.form.getlist('due_date')  # Get due dates list
-    status_data = request.form.getlist('status')  # Get status list
-
-    # Iterate over the action items to create a list of dictionaries
-    for i in range(len(action_item_data)):
-        action_items.append({
-            'item': action_item_data[i],
-            'responsible': responsible_data[i],
-            'due_date': due_date_data[i],
-            'status': status_data[i]
-        })
-
-    # Convert the list of dictionaries to a JSON string
-    action_items_json = json.dumps(action_items)
-
     # Update the database
     update_query = """
     UPDATE meetings
-    SET title = ?, date = ?, attendees = ?, summary = ?, action_items = ?
+    SET title = ?, date = ?, attendees = ?, summary = ?
     WHERE id = ?
     """
-    query(update_query, (title, date, attendees, summary, action_items_json, meeting_id))
+    query(update_query, (title, date, attendees, summary, meeting_id))
 
     flash("Meeting updated successfully.")
     return redirect(f'/customer_choosen?customer_id={customer_id}')
+
+
+@app.route('/edit_action_items', methods=['POST'])
+def edit_action_items():
+    action_item_ids = request.form.getlist('action_item_id[]')
+    items = request.form.getlist('item[]')
+    responsibles = request.form.getlist('responsible[]')
+    due_dates = request.form.getlist('due_date[]')
+    statuses = request.form.getlist('status[]')
+    
+    update_query = """
+    UPDATE action_items
+    SET item = ?, responsible = ?, due_date = ?, status = ?
+    WHERE id = ?
+    """
+    
+    # Loop through each action item and update it
+    for idx, action_item_id in enumerate(action_item_ids):
+        query(update_query, (
+            items[idx].capitalize(),
+            responsibles[idx].title(),
+            due_dates[idx],
+            statuses[idx],
+            action_item_id
+        ))
+    
+    flash("Action items updated successfully.")
+    return redirect(url_for('index'))
 
 
 # def generate_meeting_email(meeting_id):

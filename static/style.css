@@ -117,6 +117,7 @@ body {
     background-color: var(--surface-color);
     border-radius: 8px;
     box-shadow: 0 2px 4px var(--shadow-color);
+    max-height: 100vh;
 }
 
 .customer-list-header {
@@ -684,12 +685,27 @@ button {
     margin-top: 2rem;
 }
 
+
 #action-items-container h4 {
     color: var(--secondary-color);
     margin-bottom: 1rem;
 }
 
+#update-action-items-container {
+    margin-top: 2rem;
+}
+
+
+#update-action-items-container h4 {
+    color: var(--secondary-color);
+    margin-bottom: 1rem;
+}
+
 #action-items-list {
+    margin-top: 1rem;
+}
+
+#update-action-items-list {
     margin-top: 1rem;
 }
 
@@ -704,6 +720,21 @@ button {
 }
 
 #add-action-item-btn:hover {
+    background-color: var(--secondary-light);
+}
+
+
+#add-update-action-item-btn {
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    margin-bottom: 1rem;
+}
+
+#add-update-action-item-btn:hover {
     background-color: var(--secondary-light);
 }
 
@@ -841,13 +872,13 @@ label {
     color: var(--text-secondary);
 }
 
-input[type="text"], input[type="date"], textarea {
+/* input[type="text"], input[type="date"], textarea {
     padding: 0.75rem;
     border: 1px solid var(--border-color);
     border-radius: 4px;
     font-size: 1rem;
     background-color: #f9f9f9;
-}
+} */
 
 textarea {
     resize: vertical;
@@ -1064,21 +1095,28 @@ html {
 .status.pending {
     background-color: #fff3cd;
     color: #856404;
+    width: 200px;
 }
 
 .status.in-progress {
     background-color: #cce5ff;
     color: #004085;
+    width: 200px;
+
 }
 
 .status.not-started {
     background-color: #f8d7da;
     color: #721c24;
+    width: 200px;
+
 }
 
 .status.completed {
     background-color: #d4edda;
     color: #155724;
+    width: 200px;
+
 }
 
 .action-items-edit {
@@ -1181,3 +1219,53 @@ a.logout-link {
     font-size: 16px;            /* גודל פונט */
     transition: background-color 0.3s ease; /* אפקט מעבר חלק */
 }
+ 
+  .sort-btn {
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit; /* Makes the text color inherit from parent */
+    font: inherit; /* Inherits font style from parent */
+    outline: none; /* Removes outline */
+  }
+
+  .sortimg {
+    width: 20px;
+    height: 20px;
+  }
+  
+
+  .table-container {
+    margin-top: 20px;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  
+  th, td {
+    padding: 10px;
+    text-align: left;
+  }
+  
+  th {
+    background-color: #f2f2f2;
+  }
+
+  .filter-input {
+    all: unset;  /* Removes all default styles */
+    -webkit-appearance: none;  /* Removes default styles in WebKit browsers like Chrome/Safari */
+    -moz-appearance: none;  /* Removes default styles in Firefox */
+    appearance: none;  /* Standardize appearance removal */
+  }
+  .action-item-row {
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .no-action-items-message {
+    text-align: center;
+    color: #888;
+  }

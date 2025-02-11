@@ -18,6 +18,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const editDetailsBtn = document.querySelector('.edit-details');
     if (editDetailsBtn) editDetailsBtn.addEventListener('click', (e) => { e.preventDefault(); toggleEditDetails(); });
     
+    const editActionItemsBtn = document.querySelector('.edit-action-items-btn');
+    if (editActionItemsBtn) editActionItemsBtn.addEventListener('click', (e) => { e.preventDefault(); toggleEditActionItems(); });
+    
+
     const orderDetailsBtn = document.querySelector('.toggle-order-details-btn');
     if (orderDetailsBtn) orderDetailsBtn.addEventListener('click', (e) => { e.preventDefault(); toggleOrderDetails(orderId); });
     
@@ -76,6 +80,33 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
+
+    function toggleEditActionItems() {
+        var viewDiv = document.querySelector('.view-action-items');
+        var editDiv = document.querySelector('.edit-action-items');
+        const editButton = document.querySelector('.edit-action-items-btn');
+
+        if (editDiv.style.display === 'none' || editDiv.style.display === '') {
+          // Switch to edit mode: hide view, show edit form
+          editDiv.style.display = 'block';
+          viewDiv.style.display = 'none';
+          if (editButton) editButton.textContent = 'Cancle';
+        } else {
+          // Switch back to view mode: hide edit form, show view
+          editDiv.style.display = 'none';
+          viewDiv.style.display = 'block';
+          if (editButton) editButton.textContent = 'Edit';
+
+        }
+      }
+      
+      // Optional: A function to remove a row from the edit form if "Delete" is clicked
+      function deleteRow(button) {
+        // Remove the row (tr) containing the button
+        var row = button.closest('tr');
+        row.parentNode.removeChild(row);
+      }
+      
     
 
     const customerListBtn = document.querySelector('.customer-list-btn');
@@ -282,6 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="info-item">
                 <label for="status">Status:</label>
                 <select name="status" required>
+                    <option value="Pending">Not Started</option>
                     <option value="Pending">Pending</option>
                     <option value="In Progress">In Progress</option>
                     <option value="Completed">Completed</option>
@@ -316,8 +348,9 @@ document.querySelector('#meeting-form').addEventListener('submit', function (e) 
         const responsible = item.querySelector('input[name="responsible"]').value;
         const dueDate = item.querySelector('input[name="due_date"]').value;
         const status = item.querySelector('select[name="status"]').value;
+        const customer = document.getElementById("company").value;
 
-        actionItems.push({ item: actionItem, responsible: responsible, due_date: dueDate, status: status});
+        actionItems.push({ customer:customer, item: actionItem, responsible: responsible, due_date: dueDate, status: status});
     });
     
     // Add the action items to the form as a hidden input
@@ -354,6 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
                   <td><input type="date" name="due_date" required></td>
                   <td>
                       <select name="status" required>
+                            <option value="Pending">Not Started</option>
                           <option value="Pending">Pending</option>
                           <option value="In Progress">In Progress</option>
                           <option value="Completed">Completed</option>
@@ -436,3 +470,109 @@ function scrollToTop() {
     });
 
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const addUpdateActionItemBtn = document.getElementById('add-update-action-item-btn');
+    const updateActionItemsList = document.getElementById('update-action-items-list');
+
+    function addUpdateActionItem() {
+        const actionItemDiv = document.createElement('div');
+        actionItemDiv.classList.add('action-item');
+
+        actionItemDiv.innerHTML = `
+            <div class="info-item">
+                <label for="action-item">Action Item:</label>
+                <input type="text" name="update_action_item" required>
+            </div>
+            <div class="info-item">
+                <label for="responsible">Responsible:</label>
+                <input type="text" name="update_responsible" required>
+            </div>
+            <div class="info-item">
+                <label for="due-date">Due Date:</label>
+                <input type="date" name="update_due_date" required>
+            </div>
+            <div class="info-item">
+                <label for="status">Status:</label>
+                <select name="update_status" required>
+                    <option value="Pending">Not Started</option>
+                    <option value="Pending">Pending</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                </select>
+            </div>
+            <button type="button" class="remove-action-item-btn">Remove</button>
+        `;
+
+        updateActionItemsList.appendChild(actionItemDiv);
+
+        // Remove Action Item Event
+        const removeBtn = actionItemDiv.querySelector('.remove-action-item-btn');
+        removeBtn.addEventListener('click', () => {
+            updateActionItemsList.removeChild(actionItemDiv);
+        });
+    }
+
+    // Attach event listener to the "Add Action Item" button
+    if (addUpdateActionItemBtn) {
+        addUpdateActionItemBtn.addEventListener('click', addUpdateActionItem);
+    }
+
+    // Handle form submission and collect action items
+    document.querySelector('#add-update-form').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const actionItems = [];
+
+        document.querySelectorAll('#update-action-items-list .action-item').forEach(item => {
+            const actionItem = item.querySelector('input[name="update_action_item"]').value;
+            const responsible = item.querySelector('input[name="update_responsible"]').value;
+            const dueDate = item.querySelector('input[name="update_due_date"]').value;
+            const status = item.querySelector('select[name="update_status"]').value;
+            const customer = document.getElementById("company").value;
+
+            actionItems.push({ customer:customer, item: actionItem, responsible: responsible, due_date: dueDate, status: status});
+
+        });
+
+        const actionItemsInput = document.createElement('input');
+        actionItemsInput.type = 'hidden';
+        actionItemsInput.name = 'update_action_items';
+        actionItemsInput.value = JSON.stringify(actionItems);
+
+        this.appendChild(actionItemsInput);
+        this.submit();
+    });
+});
+
+document.addEventListener("DOMContentLoaded", function() {
+    // Extract query parameters from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoryId = urlParams.get("category_id");
+    const itemCategory = urlParams.get("item_category");
+
+    if (categoryId && itemCategory) {
+        let targetElement;
+
+        if (itemCategory === "meeting") {
+            targetElement = document.getElementById(`meeting-${categoryId}`);
+        } else if (itemCategory === "update") {
+            targetElement = document.getElementById(`update-${categoryId}`);
+        }
+
+        if (targetElement) {
+            // Scroll to the meeting or update element smoothly
+            targetElement.scrollIntoView({ behavior: "smooth" });
+            // Optionally add a highlight effect
+            targetElement.classList.add("highlighted");
+            
+            // If the item is a meeting, automatically open its details
+            if (itemCategory === "meeting") {
+                toggleMeetingDetails(categoryId);
+            }
+            else if (itemCategory === "update") {
+               toggleUpdateDetails(categoryId);
+            }
+        }
+    }
+});

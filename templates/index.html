@@ -21,6 +21,7 @@
             <nav class="navbar">
                 <button class="customer-list-btn">Customer List</button>
                 <button class="add-customer-btn">+ Add Customer</button>
+                <a href="/"><button class="add-customer-btn">Action Items</button></a>
             </nav>
         </div>
 
@@ -61,7 +62,7 @@
                         <button class="edit-details">Edit Details</button>
                     </div>
 
-                    <form action="/update_customer_details" method="POST" id="edit-details-form" style="display:none;">
+                    <form action="/update_customer_details" method="POST" id="edit-details-form" style="display:none;" enctype="multipart/form-data">
                         <input type="hidden" name="customer_id" value="{{ selected_customer[0] }}">
                 
                         <!-- Basic Information -->
@@ -81,10 +82,6 @@
                                     <input type="text" id="address" name="address" value="{{ selected_customer[3] }}">
                                 </div>
                                 <div class="info-item">
-                                    <label for="lead">Lead:</label>
-                                    <input type="text" id="lead" name="lead" value="{{ selected_customer[4] }}" required>
-                                </div>
-                                <div class="info-item">
                                     <label for="status">Status:</label>
                                     <select id="status" name="status" required>
                                         <option value="Customer" {% if selected_customer[5] == "Customer" %}selected{% endif %}>Customer</option>
@@ -93,6 +90,22 @@
                                         <option value="On hold" {% if selected_customer[5] == "On hold" %}selected{% endif %}>On Hold</option>
                                         <option value="Not interested" {% if selected_customer[5] == "Not interested" %}selected{% endif %}>Not Interested</option>
                                     </select>
+                                </div>
+                                <div class="info-item">
+                                    <label for="lead">Lead:</label>
+                                    <input type="text" id="lead" name="lead" value="{{ selected_customer[4] }}" required>
+                                </div>
+                                <div class="info-item">
+                                    <label for="sales_rep">Sales Rep:</label>
+                                    <input type="text" id="sales_rep" name="sales_rep" value="{{ selected_customer[6] }}" required>
+                                </div>
+                                <div class="info-item">
+                                    <label for="start_date">Start Date:</label>
+                                    <input type="date" id="start_date" name="start_date" value="{{ selected_customer[7] }}" required>
+                                </div>
+                                <div class="info-item">
+                                    <label for="nda_file">Attach NDA File:</label>
+                                    <input type="file" name="nda_file" id="nda_file" accept=".pdf,.doc,.docx,.xls,.xlsx">
                                 </div>
                             </div>
                         </section>
@@ -166,12 +179,28 @@
                             <p>{{ selected_customer[3] }}</p>
                         </div>
                         <div class="info-item">
+                            <label>Status:</label>
+                            <p>{{ selected_customer[5] }}</p>
+                        </div>
+                        <div class="info-item">
                             <label>Lead:</label>
                             <p>{{ selected_customer[4] }}</p>
                         </div>
                         <div class="info-item">
-                            <label>Status:</label>
-                            <p>{{ selected_customer[5] }}</p>
+                            <label>Sales Rep</label>
+                            <p>{{ selected_customer[6] }}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Start Date</label>
+                            <p>{{ selected_customer[7] }}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>NDA File</label>
+                            {% if selected_customer[8] %}
+                            <a href="{{ url_for('static', filename='uploads/' ~ selected_customer[8]) }}" target="_blank">View File</a>                            {% else %}
+                            <p>No NDA file</p>
+                            {% endif %}
+                            <p></p>
                         </div>
                     </div>
         
@@ -292,7 +321,7 @@
                 <div class="modal-content">
                     <span class="close-contact-btn" onclick="closeContactModal()">&times;</span>
                     <h2>Add Contact</h2>
-                    <form action="/add_contact" method="POST">
+                    <form action="/add_contact" enctype="multipart/form-data" method="POST">
                         <input type="hidden" name="customer_id" value="{{ selected_customer[0] }}"> <!-- Add this line -->
                         <div class="info-grid">
                             <div class="info-item">
@@ -466,7 +495,9 @@
 
                     <div class="timeline-details" id="details-meeting-{{ meeting[0] }}" style="display:none;">
                         <p><strong>Attendees:</strong> {{ meeting[4] }}</p>
+                        <p class="full-text"><strong>Summary:</strong> {{ meeting[5] }}</p>
                         <p><strong>Action Items:</strong></p>
+                                        
                         <table class="action-items">
                             <thead>
                                 <tr>
@@ -477,28 +508,27 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {% if meeting[6] %}
-                                    {% for action in meeting[6] %}
-                                    <tr>
-                                        <td>{{ action['item'] }}</td>
-                                        <td>{{ action['responsible'] }}</td>
-                                        <td>{{ action['due_date'] }}</td>
-                                        <td>
-                                            <span class="status {% if action['status'] == 'Pending' %}pending{% elif action['status'] == 'In Progress' %}in-progress{% elif action['status'] == 'Completed' %}completed{% else %}not-started{% endif %}">
-                                                {{ action['status'] }}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                {% else %}
-                                    <tr>
-                                        <td colspan="4">No action items available.</td>
-                                    </tr>
-                                {% endif %}
+                                {% for action_item in action_items %}
+                                    {% if action_item[6] == "meeting" and action_item[7] == meeting[0] %}
+                                        <tr>
+                                            <td>{{ action_item[2] }}</td>  <!-- Item -->
+                                            <td>{{ action_item[3] }}</td>  <!-- Responsible -->
+                                            <td>{{ action_item[4] }}</td>  <!-- Due Date -->
+                                            <td>
+                                                <span class="status 
+                                                {% if action_item[5] == 'Pending' %}pending
+                                                {% elif action_item[5] == 'In Progress' %}in-progress
+                                                {% elif action_item[5] == 'Not Started' %}not-started
+                                                {% elif action_item[5] == 'Completed' %}completed
+                                                {% endif %}
+                                                ">{{ action_item[5] }}</span>
+                                            </td>  <!-- Status -->
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
                             </tbody>
                         </table>
-                        <p class="full-text"><strong>Summary:</strong> {{ meeting[5] }}</p>
-                    </div>
+                    </div> 
                 </div>
 
                 <form class="edit-meeting-form" action="/edit_meeting" method="POST" enctype="multipart/form-data" style="display: none;">
@@ -509,51 +539,11 @@
                     <input type="text" placeholder="Attendees" name="attendees" value="{{ meeting[4] }}">
                     <textarea name="summary" placeholder="Summary">{{ meeting[5] }}</textarea>
                     
-                    <div id="action-items-container">
-                        <h4>Action Items</h4>
-                        <table class="action-items-edit">
-                            <thead>
-                                <tr>
-                                    <th>Item</th>
-                                    <th>Responsible</th>
-                                    <th>Due Date</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="action-items-table">
-                                {% if meeting[6] %}
-                                {% for action in meeting[6] %}
-                                <tr class="action-item-row">
-                                    <td><input type="text" name="action_item" value="{{ action['item'] }}" required></td>
-                                    <td><input type="text" name="responsible" value="{{ action['responsible'] }}" required></td>
-                                    <td><input type="date" name="due_date" value="{{ action['due_date'] }}" required></td>
-                                    <td>
-                                        <select name="status" required>
-                                            <option value="Pending" {% if action['status'] == 'Pending' %}selected{% endif %}>Pending</option>
-                                            <option value="In Progress" {% if action['status'] == 'In Progress' %}selected{% endif %}>In Progress</option>
-                                            <option value="Completed" {% if action['status'] == 'Completed' %}selected{% endif %}>Completed</option>
-                                        </select>
-                                    </td>
-                                    <td>
-                                        <button type="button" class="remove-action-item-btn" onclick="removeActionItem(this)">Remove</button>
-                                    </td>
-                                </tr>
-                                {% else %}
-                                <tr class="action-item-row"></tr>
-                                </tr>
-                                {% endfor %}
-                                {% endif %}
-                            </tbody>
-                        </table>
-                        <button type="button" id="add-action-item-btn" class="add-btn" style="margin-top: 1rem;">+ Add Action Item</button>
-                    </div>
                     
                     <button type="submit" class="save-btn">Save</button>
                     <button type="button" class="cancel-btn" onclick="toggleEdit('meeting', {{ meeting[0] }})">Cancel</button>
                 </form>
             </div>
-        </div>
         {% else %}
         <p>No meetings found for this customer.</p>
         {% endfor %}
@@ -620,7 +610,7 @@
             <div class="timeline-content">
                 <div class="edit-display">
                     <div style="display:flex; align-items:center; justify-content: space-between;">
-                    <h4>Title: {{ update[7] }}</h4>
+                    <h4>Title: {{ update[6] }}</h4>
                     <div class="action-buttons">
                         <button class="toggle-update-details-btn" id="update-btn-{{ update[0] }}" onclick="toggleUpdateDetails({{ update[0] }})">Open More</button>
                         <button class="edit-btn" onclick="toggleEdit('update', {{ update[0] }})">Edit</button>
@@ -633,10 +623,42 @@
                     <div class="timeline-details" id="details-update-{{ update[0] }}" style="display:none;">
                         <p class="full-text"><strong>Update:</strong>{{ update[3] }}</p>
                         <p><strong>Next Step:</strong> {{ update[4] }}</p>
-                        <p><strong>Responsible:</strong> {{ update[5] }}</p>
                         {% if update[6] %}
                         <p ><strong>Attached File:</strong> <a href="{{ url_for('static', filename='uploads/' ~ update[6]) }}" target="_blank">View File</a></p>
-                        {% endif %}                
+                        {% endif %}    
+                        <p><strong>Action Items:</strong></p>
+                                        
+                        <table class="action-items">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Responsible</th>
+                                    <th>Due Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for action_item in action_items %}
+                                    {% if action_item[6] == "update" and action_item[7] == update[0] %}
+                                        <tr>
+                                            <td>{{ action_item[2] }}</td>  <!-- Item -->
+                                            <td>{{ action_item[3] }}</td>  <!-- Responsible -->
+                                            <td>{{ action_item[4] }}</td>  <!-- Due Date -->
+                                            <td>
+                                                <span class="status 
+                                                {% if action_item[5] == 'Pending' %}pending
+                                                {% elif action_item[5] == 'In Progress' %}in-progress
+                                                {% elif action_item[5] == 'Not Started' %}not-started
+                                                {% elif action_item[5] == 'Completed' %}completed
+                                                {% endif %}
+                                                ">{{ action_item[5] }}</span>
+                                            </td>
+                                            </td>  <!-- Status -->
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>            
                     </div>
 
                 </div>
@@ -669,7 +691,7 @@
         <div class="modal-content">
             <span class="close-btn" onclick="closeUpdateModal()">&times;</span>
             <h2>Add Update</h2>
-            <form action="/add_update" method="POST" enctype="multipart/form-data">
+            <form id="add-update-form" action="/add_update" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="customer_id" value="{{ selected_customer[0] }}"> <!-- Add this line -->
 
                 <div class="info-grid">
@@ -694,14 +716,16 @@
                         <input type="text" id="next_step" name="next_step">
                     </div>
                     <div class="info-item">
-                        <label for="responsible">Responsible:</label>
-                        <input type="text" id="responsible" name="responsible">
-                    </div>
-                    <div class="info-item">
                         <label for="file">Attach File:</label>
                         <input type="file" id="file" name="file" accept=".pdf,.doc,.docx,.xls,.xlsx">
-                    </div>
+                    </div>    
                 </div>
+                <div id="update-action-items-container">
+                    <h4>Action Items</h4>
+                    <button type="button" id="add-update-action-item-btn">Add Action Item</button>
+                    <div id="update-action-items-list"></div>
+                </div>
+
                 <button type="submit" class="submit-btn">Submit Update</button>
             </form>
         </div>
@@ -715,49 +739,140 @@
 </div>
 {% else %}
 <div class="customer-profile-default">
-<div class="action-items-display">
-    <h2>Action Items</h2>
-    <table class="action-items-display-table">
-        <thead>
+    <div class="action-items-display">
+      <!-- Header with title and edit button -->
+      <div style="display:flex; align-items:center; justify-content: space-between;">
+        <h2>Action Items</h2>
+        <!-- Clicking this button toggles the edit mode -->
+        <button type="button" class="edit-action-items-btn" onclick="toggleEditActionItems()">Edit</button>
+      </div>
+      
+      <!-- View Mode: Read-only table -->
+      <div class="view-action-items">
+        <table class="action-items-display-table">
+          <thead>
             <tr>
+              <th><input type="text" id="filter-customer" placeholder="Filter by Customer..." class="filter-input" /></th>
+              <th>Item</th>
+              <th><input type="text" id="filter-responsible" placeholder="Filter by Responsible..." class="filter-input" /></th>
+              <th style="display:flex;">
+                Due Date
+                <button onclick="sortDueDate()" class="sort-btn"><img class="sortimg" src="static/img/sorting.png" alt="Sort"></button>
+              </th>
+              <th>
+                <select id="filter-status" class="filter-input">
+                  <option value="">Status</option>
+                  <option value="Not Started">Not Started</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Completed">Completed</option>
+
+                </select>
+              </th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="action-items-table">
+            {% if action_items|length == 0 %}
+              <tr>
+                <td colspan="6" class="no-action-items-message">No open action items.</td>
+              </tr>
+            {% else %}
+              {% for action_item in action_items %}
+                {% if action_item[5] != "Completed" %}
+                  <tr class="action-item-row">
+                    <td>{{ action_item[1] }}</td>
+                    <td>{{ action_item[2] }}</td>
+                    <td>{{ action_item[3] }}</td>
+                    <td>{{ action_item[4] }}</td>
+                    <td>
+                        <span class="status 
+                        {% if action_item[5] == 'Pending' %}pending
+                        {% elif action_item[5] == 'In Progress' %}in-progress
+                        {% elif action_item[5] == 'Not Started' %}not-started
+                        {% elif action_item[5] == 'Completed' %}completed
+                        {% endif %}
+                        ">{{ action_item[5] }}</span>
+                    </td>
+                    <td>
+                      <!-- Form to navigate to the specific action item -->
+                      <form method="GET" action="{{ url_for('customer_choosen') }}" class="go-to-action-item-form">
+                        <input type="hidden" name="customer_name" value="{{ action_item[1] }}">
+                        <input type="hidden" name="category_id" value="{{ action_item[7] }}"> 
+                        <input type="hidden" name="item_category" value="{{ action_item[6] }}">
+                        <button type="submit" class="go-to-action-item-btn" title="Go to this action item">
+                          <span class="arrow">→</span>
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Edit Mode: Form with inputs for each action item -->
+      <div class="edit-action-items" style="display: none;">
+        <form class="edit-action-items-form" action="/edit_action_items" method="POST" enctype="multipart/form-data">
+
+          <!-- You can include hidden fields for customer, etc., as needed -->
+          <table class="action-items-edit-table">
+            <thead>
+              <tr>
                 <th>Customer</th>
                 <th>Item</th>
                 <th>Responsible</th>
                 <th>Due Date</th>
                 <th>Status</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody id="action-items-table">
-            {% for action_item in action_items %}
-        {% if action_item[5] != "Completed" %}
-        <tr class="action-item-row">
-            <td>{{ action_item[1] }}</td>
-            <td>{{ action_item[2] }}</td>
-            <td>{{ action_item[3] }}</td>
-            <td>{{ action_item[4] }}</td>
-            <td>
-                <span class="status 
-                {% if action_item[5] == 'Pending' %}pending{% elif action_item[5] == 'In Progress' %}in-progress{% elif action['status'] == 'Not Started' %}not-started{% elif action['status'] == 'Completed' %}completed{% endif %}
-                ">{{ action_item[5] }}</span>
-            </td>
-            <td>
-                <!-- Form to send meeting ID and customer ID -->
-                <!-- <form method="POST" action="{{ url_for('customer_choosen') }}" class="go-to-action-item-form">
-                    <input type="hidden" name="customer_name" >
-                    <button type="submit" class="go-to-action-item-btn" title="Go to this action item">
-                        <span class="arrow">→</span>
-                    </button>
-                </form> -->
-            </td>
-        </tr>
-        {% endif %}
-    {% endfor %}
-        </tbody>
-    </table>
-
-</div>
-</div>
+                <th>Delete</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% if action_items|length == 0 %}
+                <tr>
+                  <td colspan="6" class="no-action-items-message">No open action items.</td>
+                </tr>
+              {% else %}
+                {% for action_item in action_items %}
+                  {% if action_item[5] != "Completed" %}
+                  <tr>
+                    <td>
+                        <input type="hidden" name="action_item_id[]" value="{{ action_item[0] }}">
+                        {{action_item[1]}}
+                    </td>
+                    <td>
+                        <input type="text" name="item[]" value="{{ action_item[2] }}">
+                      </td>
+                      <td>
+                        <input type="text" name="responsible[]" value="{{ action_item[3] }}">
+                      </td>
+                      <td>
+                        <input type="date" name="due_date[]" value="{{ action_item[4] }}">
+                      </td>
+                      <td>
+                        <select name="status[]">
+                            <option value="Not Started" {% if action_item[5]=='Not Started' %}selected{% endif %}>Not Started</option>
+                          <option value="Pending" {% if action_item[5]=='Pending' %}selected{% endif %}>Pending</option>
+                          <option value="In Progress" {% if action_item[5]=='In Progress' %}selected{% endif %}>In Progress</option>
+                          <option value="Completed" {% if action_item[5]=='Completed' %}selected{% endif %}>Completed</option>
+                        </select>
+                      </td>
+                        <td>
+                            <button type="button" class="delete-btn" onclick="deleteActionItem('{{ action_item[0] }}')">Delete</button>
+                        </td>
+                  </tr>
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            </tbody>
+          </table>
+          <button type="submit" class="save-btn">Save Changes</button>
+        </form>
+      </div>
+    </div>
+  </div>
 
 {% endif %}
 
@@ -770,7 +885,7 @@
                     <div class="profile-header">
                         <h2>Add New Customer</h2>
                     </div>
-                    <form action="/add_customer" method="POST">
+                    <form action="/add_customer" enctype="multipart/form-data" method="POST">
                         <!-- Basic Information -->
                         <section class="info-section">
                             <h3>Company Information</h3>
@@ -788,13 +903,6 @@
                                     <input type="text" id="address" name="address">
                                 </div>
                                 <div class="info-item">
-                                    <label for="lead">Lead:</label>
-                                    <select id="lead" name="lead" required>
-                                        <option value="kafrit">Kafrit</option>
-                                        <option value="n3cure">N3Cure</option>
-                                    </select>
-                                </div>
-                                <div class="info-item">
                                     <label for="status">Status:</label>
                                     <select id="status" name="status" required>
                                         <option value="Customer">Customer</option>
@@ -803,6 +911,25 @@
                                         <option value="On Hold">On Hold</option>
                                         <option value="Not Interested">Not Interested</option>
                                     </select>
+                                </div>
+                                <div class="info-item">
+                                    <label for="lead">Lead:</label>
+                                    <select id="lead" name="lead" required>
+                                        <option value="kafrit">Kafrit</option>
+                                        <option value="n3cure">N3Cure</option>
+                                    </select>
+                                </div>
+                                <div class="info-item">
+                                    <label for="sales_rep">Sales Rep:</label>
+                                    <input type="text" id="sales_rep" name="sales_rep">
+                                </div>
+                                <div class="info-item">
+                                    <label for="start_date">Start Date:</label>
+                                    <input type="date" id="start_date" name="start_date">
+                                </div>
+                                <div class="info-item">
+                                    <label for="nda_file">Attach NDA File:</label>
+                                    <input type="file" name="nda_file" id="nda_file" accept=".pdf,.doc,.docx,.xls,.xlsx">
                                 </div>
                             </div>
                         </section>                        <!-- Technical Data -->
@@ -872,6 +999,76 @@
             return true;
         }
 
+        document.querySelectorAll(".filter-input").forEach(input => {
+            input.addEventListener("input", function() {
+              var filterValue = input.value.toLowerCase();
+              var columnIndex = Array.from(input.parentNode.parentNode.children).indexOf(input.parentNode);
+              var rows = document.querySelectorAll("#action-items-table tr");
+        
+              rows.forEach(row => {
+                var cell = row.cells[columnIndex];
+                if (cell) {
+                  var text = cell.innerText.toLowerCase();
+                  if (text.indexOf(filterValue) === -1) {
+                    row.style.display = "none";
+                  } else {
+                    row.style.display = "";
+                  }
+                }
+              });
+            });
+          });
+        
+          // Function to filter status dropdown
+          document.getElementById("filter-status").addEventListener("change", function() {
+            var filterValue = this.value.toLowerCase();
+            var rows = document.querySelectorAll("#action-items-table tr");
+        
+            rows.forEach(row => {
+              var statusCell = row.cells[4];
+              if (statusCell) {
+                var status = statusCell.innerText.trim().toLowerCase();
+                if (filterValue && status.indexOf(filterValue) === -1) {
+                  row.style.display = "none";
+                } else {
+                  row.style.display = "";
+                }
+              }
+            });
+          });
+        
+          // Function to sort the due date column (oldest to newest, reverse on click)
+          let isAscending = true;
+        
+          function sortDueDate() {
+            const table = document.querySelector(".action-items-display-table tbody");
+            const rows = Array.from(table.rows);
+        
+            rows.sort((rowA, rowB) => {
+              const dateA = new Date(rowA.cells[3].innerText.trim());
+              const dateB = new Date(rowB.cells[3].innerText.trim());
+        
+              if (isAscending) {
+                return dateA - dateB;
+              } else {
+                return dateB - dateA;
+              }
+            });
+        
+            rows.forEach(row => table.appendChild(row));
+            isAscending = !isAscending;
+          }
+
+          function deleteActionItem(actionItemId) {
+            if (confirm("Are you sure you want to delete this item?")) {
+                let form = document.createElement("form");
+                form.action = `/delete_action_item/${actionItemId}`;
+                form.method = "POST";
+        
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
     </script>
     <script src="{{ url_for('static', filename='main.js') }}">
 
