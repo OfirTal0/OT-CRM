@@ -1138,9 +1138,8 @@ html {
 }
 
 .action-items-display {
-    padding: 2rem;
+    padding: 4rem;
     margin: 2rem auto;
-    max-width: 1000px;
   }
 
 .action-section h2 {
@@ -1150,19 +1149,20 @@ html {
   
 
 .action-items-display-table {
-    width: 100%;
     border-collapse: collapse;
     margin-bottom: 2rem;
     border-radius: 8px;
     overflow: hidden;
     text-align: left;
   }
-  
+
+
   .action-items-display-table td {
     padding: 1rem 1.5rem;
     font-size: 0.875rem;
     color: #374151;
     border-bottom: 1px solid #e5e7eb;
+    width: 20%;
   }
   
   .action-items-display-table th {
