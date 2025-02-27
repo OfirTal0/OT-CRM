@@ -27,8 +27,6 @@ def get_redirect_uri():
     scheme = "https" if "railway.app" in host else request.scheme
     return f"{scheme}://{host}/auth/callback"
 
-print(f"Redirect URI being used: {get_redirect_uri()}")
-
 
 CLIENT_ID = 'f015ff07-5ad0-4a4a-9959-8fb45bf46e52'
 CLIENT_SECRET = 'gB.8Q~~PoWp4tU7qicQjXnWfwywyxbJ17PTtFcsy'
