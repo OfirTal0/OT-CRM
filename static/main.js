@@ -39,14 +39,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+
     function toggleListView() {
         const customerList = document.querySelector('.customer-list');
         const customerDetails = document.querySelector('.customer-details');
         const addCustomerSection = document.querySelector('.add-customer-section');
-        
+    
         if (customerList) customerList.style.display = 'block';
         if (customerDetails) customerDetails.style.display = 'block';
         if (addCustomerSection) addCustomerSection.style.display = 'none';
+
     }
 
     function closeListView() {
@@ -178,11 +180,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const customerDetails = document.querySelector('.customer-details');
         const addCustomerSection = document.querySelector('.add-customer-section');
         const customerList = document.querySelector('.customer-list');
+
         if (customerList) customerList.style.display = 'none';
         if (customerDetails) customerDetails.style.display = 'none';
         if (addCustomerSection) addCustomerSection.style.display = 'block';
+
+        
     }
 
+    
     // Open and close modals
     function openModal(modalId) {
         const modal = document.getElementById(modalId);
@@ -437,7 +443,7 @@ function loadMoreContacts(itemsClass, itemsPerPage) {
 // Initialization logic
 document.addEventListener('DOMContentLoaded', () => {
     const itemsClass = 'contact-card'; // Class name of contact items
-    const itemsPerPage = 3; // Number of items to show per click
+    const itemsPerPage = 4; // Number of items to show per click
     const loadMoreBtn = document.getElementById('load-more-contact-btn');
     const contacts = document.querySelectorAll(`.${itemsClass}`);
 

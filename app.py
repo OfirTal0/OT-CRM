@@ -9,7 +9,8 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import random
 import shutil
-
+from requests_oauthlib import OAuth2Session
+import msal
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
@@ -20,12 +21,23 @@ DATABASE_PATH = os.path.join(BASE_DIR, 'n3cure_crm.db')  # Make sure 'petforme.d
 
 app.secret_key = os.getenv('SECRET_KEY','default_secret_key')
 
-# הגדרת פרטי התחברות
-USERNAME = "n3cure"
-PASSWORD = "n3cure!"
+CLIENT_ID = 'f015ff07-5ad0-4a4a-9959-8fb45bf46e52'
+CLIENT_SECRET = 'gB.8Q~~PoWp4tU7qicQjXnWfwywyxbJ17PTtFcsy'
+TENANT_ID = '2f359e1f-c37b-4267-a0c0-5110b8b578ba'
+AUTHORITY = f'https://login.microsoftonline.com/{TENANT_ID}'
+REDIRECT_URI = 'http://localhost:5000/auth/callback'
+SCOPES = ['User.Read']  # גישה לקריאת פרטי משתמש
 
-# זמן תוקף הסשן (24 שעות)
-SESSION_TIMEOUT = timedelta(hours=24)
+# רשימת אימיילים מורשים
+ALLOWED_EMAILS = ['ofir@n3cure.com', 'yoram@n3cure.com', 'danny@n3cure.com']
+
+
+def build_msal_app():
+    return msal.ConfidentialClientApplication(
+        CLIENT_ID,
+        authority=AUTHORITY,
+        client_credential=CLIENT_SECRET,
+    )
 
 @app.route('/api/download_db', methods=['GET'])
 def download_db():
@@ -38,40 +50,45 @@ def download_static():
     return send_file('static_files.zip', as_attachment=True)
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/login')
 def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+    # יצירת בקשה לאימות עם Azure
+    msal_app = build_msal_app()
+    auth_url = msal_app.get_authorization_request_url(SCOPES, redirect_uri=REDIRECT_URI)
+    return redirect(auth_url)
 
-        if username == "n3cure" and password == "n3cure!":
-            session['login_time'] = datetime.now().replace(tzinfo=None)
-            return redirect(url_for('index'))
+
+@app.route('/auth/callback')
+def auth_callback():
+    # קבלת תגובת ה-redirect לאחר האימות
+    msal_app = build_msal_app()
+    result = msal_app.acquire_token_by_authorization_code(
+        request.args['code'],
+        scopes=SCOPES,
+        redirect_uri=REDIRECT_URI
+    )
+
+    if "access_token" in result:
+        # אם קיבלת את הטוקן, ניתן להתחבר כמשתמש
+        user_info = result.get('id_token_claims')
+        user_email = user_info.get('preferred_username')
+
+        # בדוק אם האימייל של המשתמש נמצא ברשימה המורשית
+        if user_email in ALLOWED_EMAILS:
+            session['user'] = user_info  # שומרים את המידע במושך
+            return redirect(url_for('index'))  # חזרה לדף האינדקס לאחר האימות
         else:
-            flash("שם משתמש או סיסמה שגויים", "login_error")  # ← Assign category "login_error"
-            return redirect(url_for('login'))
+            return "You are not authorized to access this application.", 403  # שגיאה אם האימייל לא נמצא ברשימה
 
-    if 'login_time' in session:
-        login_time = session['login_time']
-        if isinstance(login_time, datetime):
-            login_time = login_time.replace(tzinfo=None)
-
-        if datetime.now().replace(tzinfo=None) - login_time > SESSION_TIMEOUT:
-            session.pop('login_time', None)
-            flash('הסשן פג, יש להיכנס שוב', "session_expired")  # ← Different category
-            return redirect(url_for('login'))
-
-        return redirect(url_for('index'))
-
-    return render_template('login.html')
-
-
+    else:
+        return 'Authentication failed', 400
+    
 
 @app.route('/logout')
 def logout():
     session.clear()  # מחיקת הסשן
     flash('You have been logged out.', 'info')
-    return redirect(url_for('login'))
+    return redirect(url_for('index'))
 
 def query(sql: str = "", params: tuple = (), db_name=DATABASE_PATH):
     try:
@@ -89,13 +106,24 @@ def query(sql: str = "", params: tuple = (), db_name=DATABASE_PATH):
         return None
     
 
-@app.route('/index', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST'])
 def index():
+    if 'user' not in session:
+        return redirect(url_for('login'))  # אם אין אימות, הפנה לאימות
 
     customers = query("SELECT * FROM customers ORDER BY name ASC")
     action_items = query(f"SELECT * FROM action_items")
+    contacts_display = query(f"SELECT * FROM contacts")
+    return render_template('index.html', customers=customers,action_items=action_items, contacts_display=contacts_display)
 
-    return render_template('index.html', customers=customers,action_items=action_items)
+@app.route('/contacts', methods=['GET', 'POST'])
+def contacts():
+    if 'user' not in session:
+        return redirect(url_for('login'))  # אם אין אימות, הפנה לאימות
+
+    contacts_display = query(f"SELECT * FROM contacts")
+    return render_template('contacts.html', contacts=contacts_display)
+
 
 @app.route('/customer_choosen', methods=['POST', 'GET'])
 def customer_choosen():
@@ -368,8 +396,20 @@ def edit_order():
 @app.route('/delete_customer', methods=['POST'])
 def delete_customer():
     customer_id = request.form.get('customer_id')
+
+    # Step 1: Delete related data in all the other tables
+    query("DELETE FROM commercial WHERE company = (SELECT Name FROM customers WHERE id = ?)", (customer_id,))
+    query("DELETE FROM contacts WHERE company = (SELECT Name FROM customers WHERE id = ?)", (customer_id,))
+    query("DELETE FROM meetings WHERE company = (SELECT Name FROM customers WHERE id = ?)", (customer_id,))
+    query("DELETE FROM orders WHERE company = (SELECT Name FROM customers WHERE id = ?)", (customer_id,))
+    query("DELETE FROM technical WHERE company = (SELECT Name FROM customers WHERE id = ?)", (customer_id,))
+    query("DELETE FROM updates WHERE company = (SELECT Name FROM customers WHERE id = ?)", (customer_id,))
+    query("DELETE FROM action_items WHERE customer = (SELECT Name FROM customers WHERE id = ?)", (customer_id,))
+
+    # Step 2: Delete the customer itself
     query("DELETE FROM customers WHERE id = ?", (customer_id,))
-    return redirect(url_for('index'))  
+    
+    return redirect(url_for('index'))
     
 # Update technical
 
@@ -421,19 +461,27 @@ def update_customer_details():
                 WHERE id = ?
             """, (line, application, line_speed, line_width, curing, targets, technical_id))
 
-    # Update commercial data
-    for key, value in request.form.items():
-        if key.startswith('commercial_id_'):
-            commercial_id = value
-            index = key.split('_')[-1]
-            annual_volume = request.form.get(f'annual_volume_{index}')
-            potential_lines = request.form.get(f'potential_lines_{index}')
 
-            query("""
+    commercial_id = request.form.get('commercial_id')
+    if commercial_id:
+        annual_volume = request.form.get(f'annual_volume')
+        potential_lines = request.form.get(f'potential_lines')
+
+        query("""
                 UPDATE commercial
                 SET annual_volume = ?, lines_amount = ?
                 WHERE id = ?
             """, (annual_volume, potential_lines, commercial_id))
+    else: 
+
+        company_name = name  # Assuming 'name' is the company name in the customers table
+        annual_volume = request.form.get('annual_volume')
+        potential_lines = request.form.get('potential_lines')
+
+        query("""
+            INSERT INTO commercial (company, annual_volume, lines_amount)
+            VALUES (?, ?, ?)
+        """, (company_name, annual_volume, potential_lines))
 
     flash("Customer details updated successfully.")
     return redirect(f'/customer_choosen?customer_id={customer_id}')

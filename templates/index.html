@@ -19,8 +19,9 @@
                 
             </header>
             <nav class="navbar">
-                <button class="customer-list-btn">Customer List</button>
                 <button class="add-customer-btn">+ Add Customer</button>
+                <button class="customer-list-btn">Customer List</button>
+                <a href="/contacts"><button class="contacts-display-btn">Contacts List</button></a>
                 <a href="/"><button class="add-customer-btn">Action Items</button></a>
             </nav>
         </div>
@@ -97,11 +98,15 @@
                                 </div>
                                 <div class="info-item">
                                     <label for="sales_rep">Sales Rep:</label>
-                                    <input type="text" id="sales_rep" name="sales_rep" value="{{ selected_customer[6] }}" required>
+                                    <select id="sales_rep" name="sales_rep" required>
+                                        <option  value="Roee Levy" {% if selected_customer[6] == "Roee Levy" %}selected{% endif %}>Roee Levy</option>
+                                        <option  value="Liat Heled Habshush" {% if selected_customer[6] == "Liat Heled Habshush" %}selected{% endif %}>Liat Heled Habshush</option>
+                                        <option  value="Yoram Ben-ari" {% if selected_customer[6] == "Yoram Ben-ari" %}selected{% endif %}>Yoram Ben-ari</option>
+                                    </select>
                                 </div>
                                 <div class="info-item">
                                     <label for="start_date">Start Date:</label>
-                                    <input type="date" id="start_date" name="start_date" value="{{ selected_customer[7] }}" required>
+                                    <input type="date" id="start_date" name="start_date" value="{{ selected_customer[7] }}">
                                 </div>
                                 <div class="info-item">
                                     <label for="nda_file">Attach NDA File:</label>
@@ -148,17 +153,29 @@
                             <h3>Commercial Details</h3>
                             {% for commercial in commercial %}
                             <div class="info-grid">
-                                <input type="hidden" name="commercial_id_{{ loop.index }}" value="{{ commercial[0] }}">
+                                <input type="hidden" name="commercial_id" value="{{ commercial[0] if commercial else '' }}">
                                 <div class="info-item">
-                                    <label for="potential_lines_{{ loop.index }}">Amount of Potential Lines:</label>
-                                    <input type="number" id="potential_lines_{{ loop.index }}" name="potential_lines_{{ loop.index }}" value="{{ commercial[3] }}">
+                                    <label for="potential_lines">Amount of Potential Lines:</label>
+                                    <input type="number" id="potential_lines" name="potential_lines" value="{{commercial[3]}}">
                                 </div>
                                 <div class="info-item">
-                                    <label for="annual_volume_{{ loop.index }}">Annual Volume (kg):</label>
-                                    <input type="number" id="annual_volume_{{ loop.index }}" name="annual_volume_{{ loop.index }}" value="{{ commercial[2] }}">
+                                    <label for="annual_volume">Annual Volume (kg):</label>
+                                    <input type="number" id="annual_volume" name="annual_volume" value="{{commercial[2]}}">
                                 </div>
                             </div>
-                            {% endfor %}
+                            {%else%}
+                            <div class="info-grid">
+                                <input type="hidden" name="commercial_id" value="{{ commercial[0] if commercial else '' }}">
+                                <div class="info-item">
+                                    <label for="potential_lines">Amount of Potential Lines:</label>
+                                    <input type="number" id="potential_lines" name="potential_lines">
+                                </div>
+                                <div class="info-item">
+                                    <label for="annual_volume">Annual Volume (kg):</label>
+                                    <input type="number" id="annual_volume" name="annual_volume">
+                                </div>
+                            </div>
+                            {%endfor%}
                         </section>
                 
                         <button type="submit" class="submit-btn">Save Changes</button>
@@ -207,57 +224,69 @@
                     </section>
 
                     <section class="technical-section">
-                    <h3>Technical Data</h3>
-                    <table class="data-table">
-                    <thead>
-                    <tr>
-                    <th>Line</th>
-                    <th>Line Speed (m/min)</th>
-                    <th>Line Width (mm)</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for tech in technical %}
-                    <div class="info-item">
-                        <label>Application:</label>
-                        <p>{{ tech[3] }}</p>
-                    </div>
-                    <div class="info-item">
-                        <label>Curing Status:</label>
-                        <p>{{ tech[6] }}</p>
-                    </div>
-                    <div class="info-item">
-                        <label>Targets:</label>
-                        <p>{{ tech[7] }}</p>
-                    </div>
-                    <tr>
-                    <td>{{ tech[2] }}</td>
-                    <td>{{ tech[4] }}</td>
-                    <td>{{ tech[5] }}</td>
-                    </tr>
-                    {% endfor %}
-                    </tbody>
-                    </table>
+                        <h3>Technical Data</h3>
+                        {% if technical %}
+                        <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Line</th>
+                                <th>Line Speed (m/min)</th>
+                                <th>Line Width (mm)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tech in technical %}
+                            <tr>
+                                <td>{{ tech[2] }}</td>
+                                <td>{{ tech[4] }}</td>
+                                <td>{{ tech[5] }}</td>
+                            </tr>
+                            <div class="info-item">
+                                <label>Application:</label>
+                                <p>{{ tech[3] }}</p>
+                            </div>
+                            <div class="info-item">
+                                <label>Curing Status:</label>
+                                <p>{{ tech[6] }}</p>
+                            </div>
+                            <div class="info-item">
+                                <label>Targets:</label>
+                                <p>{{ tech[7] }}</p>
+                            </div>
+                            {% endfor %}
+                        </tbody>
+                        </table>
+                        {% else %}
+                        <div class="timeline">
+                            <p>No data found for this customer.</p>
+                        </div>
+                        {% endif %}
                     </section>
 
                     <section class="commercial-section">
-                    <h3>Commercial Details</h3>
-                    <table class="data-table">
-                    <thead>
-                    <tr>
-                    <th>Amount of Potential Lines</th>
-                    <th>Annual Volume (kg)</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for commercial_detail in commercial %}
-                    <tr>
-                    <td>{{ commercial_detail[3] }}</td>
-                    <td>{{ commercial_detail[2] }}</td>
-                    </tr>
-                    {% endfor %}
-                    </tbody>
-                    </table>
+                        <h3>Commercial Details</h3>
+                        {% if commercial %}
+                        <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Amount of Potential Lines</th>
+                                <th>Annual Volume (kg)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for commercial_detail in commercial %}
+                            <tr>
+                                <td>{{ commercial_detail[3] }}</td>
+                                <td>{{ commercial_detail[2] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        </table>
+                        {% else %}
+                        <div class="timeline">
+                            <p>No data found for this customer.</p>
+                        </div>
+                        {% endif %}
                     </section>
                 </div>
             </div>
@@ -876,7 +905,6 @@
 
 {% endif %}
 
-
 </div>
         
             <!-- Add Customer Section -->
@@ -921,7 +949,11 @@
                                 </div>
                                 <div class="info-item">
                                     <label for="sales_rep">Sales Rep:</label>
-                                    <input type="text" id="sales_rep" name="sales_rep">
+                                    <select  id="sales_rep" name="sales_rep" required>
+                                        <option value="Roee Levy">Roee Levy</option>
+                                        <option value="Liat Heled Habshush">Liat Heled Habshush </option>
+                                        <option value="Yoram Ben-ari">Yoram Ben-ari</option>
+                                    </select>
                                 </div>
                                 <div class="info-item">
                                     <label for="start_date">Start Date:</label>
@@ -980,10 +1012,9 @@
                     </form>
                 </div>
             </div>
-        </div>
-        
-    </div>
 
+ 
+    
     <script>
         function confirmDelete(event) {
             // Show a confirmation dialog

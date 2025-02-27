@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N3cure CRM - Plastic Additives Solutions</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body> 
+    <div class="app-container">
+        <div class="main-header">
+            <header class="header">
+                <div class="logo-container">
+                    <h1><a href="/">N3cure CRM</a></h1>
+                    <p>Cross-linking Solutions</p>
+                    <a href="{{ url_for('logout') }}" class="logout-link">Log out</a>
+                </div>
+                <a href="/"><img class="logoimg" src="static\img\logo.png" alt="n3cure_logo"></a>
+                
+            </header>
+            <nav class="navbar">
+                <button class="add-customer-btn">+ Add Customer</button>
+                <button class="customer-list-btn">Customer List</button>
+                <a href="/contacts"><button class="contacts-display-btn">Contacts List</button></a>
+                <a href="/"><button class="add-customer-btn">Action Items</button></a>
+            </nav>
+        </div>
+
+        <div class="main-content">
+            
+            <div class="contacts-display-section">
+                <h2 class="section-title">Contacts</h2>
+                
+                <!-- Filter and Search Section -->
+                <div class="contacts-filter-search">
+                    <input type="text" id="search-contact" placeholder="Search by Name or Company..." class="search-input">
+                </div>
+
+                <!-- Contacts Cards -->
+                <div class="contacts-cards-display">
+                    {% if contacts_display|length == 0 %}
+                        <p>No contacts available.</p>
+                    {% else %}
+                        <div class="contacts-grid">
+                            {% for contact in contacts_display %}
+                                <div class="contact-card-display">
+                                    <div class="contact-card-header">
+                                        <h3>{{ contact[1] }}</h3>
+                                        <p>{{ contact[5] }}</p>
+                                    </div>
+                                    <div class="contact-card-details">
+                                        <p><img src="static/img/phone-icon.png" alt="Phone"> {{ contact[2] }}</p>
+                                        <p><img src="static/img/email-icon.png" alt="Email"> {{ contact[3] }}</p>
+                                        <p><strong>Role:</strong> {{ contact[4] }}</p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+
+        <script src="{{ url_for('static', filename='main.js') }}">
+        </script>
+
+    </body>
+    </html>
+    
+    
