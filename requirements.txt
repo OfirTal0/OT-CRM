@@ -11,5 +11,5 @@ MarkupSafe==3.0.2
 openpyxl==3.1.5
 packaging==24.2
 Werkzeug==3.1.3
-requests-oauthlib
-
+requests-oauthlib==1.3.1  # מציין גרסה כדי למנוע בעיות תאימות
+msal==1.25.0  # מוסיף את MSAL שחסר וחשוב לאימות
