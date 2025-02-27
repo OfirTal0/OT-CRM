@@ -21,11 +21,13 @@ DATABASE_PATH = os.path.join(BASE_DIR, 'n3cure_crm.db')  # Make sure 'petforme.d
 
 app.secret_key = os.getenv('SECRET_KEY','default_secret_key')
 
+def get_redirect_uri():
+    return f"{request.scheme}://{request.host}/auth/callback"
+
 CLIENT_ID = 'f015ff07-5ad0-4a4a-9959-8fb45bf46e52'
 CLIENT_SECRET = 'gB.8Q~~PoWp4tU7qicQjXnWfwywyxbJ17PTtFcsy'
 TENANT_ID = '2f359e1f-c37b-4267-a0c0-5110b8b578ba'
 AUTHORITY = f'https://login.microsoftonline.com/{TENANT_ID}'
-REDIRECT_URI = 'http://localhost:5000/auth/callback'
 SCOPES = ['User.Read']  # גישה לקריאת פרטי משתמש
 
 # רשימת אימיילים מורשים
@@ -51,39 +53,33 @@ def download_static():
 
 
 @app.route('/login')
+@app.route('/login')
 def login():
-    # יצירת בקשה לאימות עם Azure
     msal_app = build_msal_app()
-    auth_url = msal_app.get_authorization_request_url(SCOPES, redirect_uri=REDIRECT_URI)
+    auth_url = msal_app.get_authorization_request_url(SCOPES, redirect_uri=get_redirect_uri())
     return redirect(auth_url)
 
 
 @app.route('/auth/callback')
 def auth_callback():
-    # קבלת תגובת ה-redirect לאחר האימות
     msal_app = build_msal_app()
     result = msal_app.acquire_token_by_authorization_code(
         request.args['code'],
         scopes=SCOPES,
-        redirect_uri=REDIRECT_URI
+        redirect_uri=get_redirect_uri()  # משתמש ב-redirect הדינמי
     )
 
     if "access_token" in result:
-        # אם קיבלת את הטוקן, ניתן להתחבר כמשתמש
         user_info = result.get('id_token_claims')
         user_email = user_info.get('preferred_username')
 
-        # בדוק אם האימייל של המשתמש נמצא ברשימה המורשית
         if user_email in ALLOWED_EMAILS:
-            session['user'] = user_info  # שומרים את המידע במושך
-            return redirect(url_for('index'))  # חזרה לדף האינדקס לאחר האימות
+            session['user'] = user_info
+            return redirect(url_for('index'))
         else:
-            return "You are not authorized to access this application.", 403  # שגיאה אם האימייל לא נמצא ברשימה
+            return "You are not authorized to access this application.", 403
 
-    else:
-        return 'Authentication failed', 400
-    
-
+    return 'Authentication failed', 400
 @app.route('/logout')
 def logout():
     session.clear()  # מחיקת הסשן
