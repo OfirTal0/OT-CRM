@@ -21,6 +21,9 @@ DATABASE_PATH = os.path.join(BASE_DIR, 'n3cure_crm.db')  # Make sure 'petforme.d
 
 app.secret_key = os.getenv('SECRET_KEY','default_secret_key')
 
+if __name__ == '__main__':
+    app.run(debug=True, host="localhost", port=5000)
+
 
 def get_redirect_uri():
     host = request.host
