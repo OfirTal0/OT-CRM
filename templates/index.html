@@ -13,7 +13,6 @@
                 <div class="logo-container">
                     <h1><a href="/">N3cure CRM</a></h1>
                     <p>Cross-linking Solutions</p>
-                    <a href="{{ url_for('logout') }}" class="logout-link">Log out</a>
                 </div>
                 <a href="/"><img class="logoimg" src="static\img\logo.png" alt="n3cure_logo"></a>
                 
@@ -781,9 +780,9 @@
         <table class="action-items-display-table">
           <thead>
             <tr>
-              <th><input type="text" id="filter-customer" placeholder="Filter by Customer..." class="filter-input" /></th>
+              <th><input type="text" id="filter-customer" placeholder="Customer..." class="filter-input" /></th>
               <th>Item</th>
-              <th><input type="text" id="filter-responsible" placeholder="Filter by Responsible..." class="filter-input" /></th>
+              <th><input type="text" id="filter-responsible" placeholder="Responsible..." class="filter-input" /></th>
               <th style="display:flex;">
                 Due Date
                 <button onclick="sortDueDate()" class="sort-btn"><img class="sortimg" src="static/img/sorting.png" alt="Sort"></button>

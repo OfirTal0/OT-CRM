@@ -60,7 +60,6 @@ def download_static():
 
 
 @app.route('/login')
-@app.route('/login')
 def login():
     msal_app = build_msal_app()
     auth_url = msal_app.get_authorization_request_url(SCOPES, redirect_uri=get_redirect_uri())
@@ -87,11 +86,7 @@ def auth_callback():
             return "You are not authorized to access this application.", 403
 
     return 'Authentication failed', 400
-@app.route('/logout')
-def logout():
-    session.clear()  # מחיקת הסשן
-    flash('You have been logged out.', 'info')
-    return redirect(url_for('index'))
+
 
 def query(sql: str = "", params: tuple = (), db_name=DATABASE_PATH):
     try:
@@ -121,10 +116,7 @@ def index():
 
 @app.route('/contacts', methods=['GET', 'POST'])
 def contacts():
-    if 'user' not in session:
-        return redirect(url_for('login'))  # אם אין אימות, הפנה לאימות
-
-    contacts_display = query(f"SELECT * FROM contacts")
+    contacts_display = query("SELECT * FROM contacts ORDER BY name ASC")
     return render_template('contacts.html', contacts=contacts_display)
 
 

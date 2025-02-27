@@ -65,7 +65,6 @@ body {
     flex: 1;
     gap: 1.5rem;
     padding: 1rem;
-    max-width: 1800px;
     margin: 0 auto;
     width: 100%;
 }
@@ -117,7 +116,7 @@ body {
     background-color: var(--surface-color);
     border-radius: 8px;
     box-shadow: 0 2px 4px var(--shadow-color);
-    max-height: 100vh;
+    max-height: 120vh;
 }
 
 .customer-list-header {
@@ -133,7 +132,7 @@ body {
 }
 
 .customer-list-content {
-    max-height: calc(100vh - 200px);
+    max-height: calc(120vh - 200px);
     overflow-y: auto;
     display: flex  ;
     flex-direction: column;
@@ -1096,27 +1095,27 @@ html {
 .status.pending {
     background-color: #fff3cd;
     color: #856404;
-    width: 200px;
+    width: 100px;
 }
 
 .status.in-progress {
     background-color: #cce5ff;
     color: #004085;
-    width: 200px;
+    width: 100px;
 
 }
 
 .status.not-started {
     background-color: #f8d7da;
     color: #721c24;
-    width: 200px;
+    width: 100px;
 
 }
 
 .status.completed {
     background-color: #d4edda;
     color: #155724;
-    width: 200px;
+    width: 100px;
 
 }
 
@@ -1141,6 +1140,8 @@ html {
 .action-items-display {
     padding: 4rem;
     margin: 2rem auto;
+    max-height: 100vh;
+
   }
 
 .action-section h2 {
@@ -1163,7 +1164,6 @@ html {
     font-size: 0.875rem;
     color: #374151;
     border-bottom: 1px solid #e5e7eb;
-    width: 20%;
   }
   
   .action-items-display-table th {
@@ -1173,7 +1173,6 @@ html {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: #6b7280;
-    font-weight: 600;
     border-bottom: 1px solid #e5e7eb;
   }
   
@@ -1275,13 +1274,13 @@ a.logout-link {
 
   .contacts-display-section {
     padding: 4rem;
-    margin: 2rem auto;
 
 }
 
 .section-title {
     font-size: 1.8rem;
     color: var(--primary-color);
+    margin-bottom: 20px;
 }
 
 .contacts-filter-search {
@@ -1299,7 +1298,6 @@ a.logout-link {
 
 .filter-input {
     padding: 8px;
-    width: 30%;
     border-radius: 4px;
     border: 1px solid #ccc;
 }
@@ -1317,6 +1315,13 @@ a.logout-link {
     border-radius: 8px;
     box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
     text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Transition for smooth effect */
+}
+
+.contact-card-display:hover {
+    transform: translateY(-5px); /* Slightly lift the card */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Stronger shadow for a hover effect */
+    background-color: #f9f9f9; /* Change background color on hover */
 }
 
 .contact-card-header {

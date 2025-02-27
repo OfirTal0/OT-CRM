@@ -13,24 +13,21 @@
                 <div class="logo-container">
                     <h1><a href="/">N3cure CRM</a></h1>
                     <p>Cross-linking Solutions</p>
-                    <a href="{{ url_for('logout') }}" class="logout-link">Log out</a>
                 </div>
                 <a href="/"><img class="logoimg" src="static\img\logo.png" alt="n3cure_logo"></a>
-                
             </header>
             <nav class="navbar">
-                <button class="add-customer-btn">+ Add Customer</button>
-                <button class="customer-list-btn">Customer List</button>
-                <a href="/contacts"><button class="contacts-display-btn">Contacts List</button></a>
+                <button class="add-customer-btn" onclick="window.location.href='/'">+ Add Customer</button>
+                <button class="customer-list-btn" onclick="window.location.href='/'">Customer List</button>
+                <button class="contacts-display-btn" onclick="window.location.href='/contacts'">Contacts List</button>
                 <a href="/"><button class="add-customer-btn">Action Items</button></a>
             </nav>
         </div>
 
         <div class="main-content">
-            
             <div class="contacts-display-section">
                 <h2 class="section-title">Contacts</h2>
-                
+
                 <!-- Filter and Search Section -->
                 <div class="contacts-filter-search">
                     <input type="text" id="search-contact" placeholder="Search by Name or Company..." class="search-input">
@@ -38,34 +35,56 @@
 
                 <!-- Contacts Cards -->
                 <div class="contacts-cards-display">
-                    {% if contacts_display|length == 0 %}
+                    {% if contacts|length == 0 %}
                         <p>No contacts available.</p>
                     {% else %}
-                        <div class="contacts-grid">
-                            {% for contact in contacts_display %}
-                                <div class="contact-card-display">
+                        <div class="contacts-grid" id="contacts-grid">
+                            {% for contact in contacts %}
+                                <div class="contact-card-display" data-name="{{ contact[1] }}" data-company="{{ contact[5] }}">
                                     <div class="contact-card-header">
                                         <h3>{{ contact[1] }}</h3>
                                         <p>{{ contact[5] }}</p>
                                     </div>
                                     <div class="contact-card-details">
-                                        <p><img src="static/img/phone-icon.png" alt="Phone"> {{ contact[2] }}</p>
-                                        <p><img src="static/img/email-icon.png" alt="Email"> {{ contact[3] }}</p>
                                         <p><strong>Role:</strong> {{ contact[4] }}</p>
+                                        
+                                        <!-- Phone -->
+                                        {% if contact[2] %}
+                                            <p><img src="static/img/phone-icon.png" alt="Phone"> {{ contact[2] }}</p>
+                                        {% endif %}
+                                        
+                                        <!-- Email -->
+                                        {% if contact[3] %}
+                                            <p><img src="static/img/email-icon.png" alt="Email"> {{ contact[3] }}</p>
+                                        {% endif %}
                                     </div>
                                 </div>
                             {% endfor %}
                         </div>
                     {% endif %}
                 </div>
-
             </div>
         </div>
 
-        <script src="{{ url_for('static', filename='main.js') }}">
-        </script>
+        <script src="{{ url_for('static', filename='main.js') }}"></script>
+        <script>
+            // JavaScript for searching contacts by name or company
+            document.getElementById('search-contact').addEventListener('input', function() {
+                let searchValue = this.value.toLowerCase();
+                let contacts = document.querySelectorAll('.contact-card-display');
+                
+                contacts.forEach(function(contact) {
+                    let name = contact.getAttribute('data-name').toLowerCase();
+                    let company = contact.getAttribute('data-company').toLowerCase();
 
+                    // Check if either name or company matches the search value
+                    if (name.includes(searchValue) || company.includes(searchValue)) {
+                        contact.style.display = 'block'; // Show the contact card
+                    } else {
+                        contact.style.display = 'none'; // Hide the contact card
+                    }
+                });
+            });
+        </script>
     </body>
-    </html>
-    
-    
+</html>
