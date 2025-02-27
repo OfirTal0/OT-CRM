@@ -21,8 +21,14 @@ DATABASE_PATH = os.path.join(BASE_DIR, 'n3cure_crm.db')  # Make sure 'petforme.d
 
 app.secret_key = os.getenv('SECRET_KEY','default_secret_key')
 
+
 def get_redirect_uri():
-    return f"{request.scheme}://{request.host}/auth/callback"
+    host = request.host
+    scheme = "https" if "railway.app" in host else request.scheme
+    return f"{scheme}://{host}/auth/callback"
+
+print(f"Redirect URI being used: {get_redirect_uri()}")
+
 
 CLIENT_ID = 'f015ff07-5ad0-4a4a-9959-8fb45bf46e52'
 CLIENT_SECRET = 'gB.8Q~~PoWp4tU7qicQjXnWfwywyxbJ17PTtFcsy'
