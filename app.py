@@ -11,25 +11,20 @@ import random
 import shutil
 from requests_oauthlib import OAuth2Session
 import msal
+import requests
+
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Get the directory where app.py is located
-DATABASE_PATH = os.path.join(BASE_DIR, 'n3cure_crm.db')  # Make sure 'petforme.db' matches your SQLite database file name
+DATABASE_PATH = os.path.join(BASE_DIR, 'OT_crm.db')  # Make sure 'petforme.db' matches your SQLite database file name
 
 app.secret_key = os.getenv('SECRET_KEY','default_secret_key')
 
 if __name__ == '__main__':
     app.run(debug=True, host="localhost", port=5000)
-
-
-def get_redirect_uri():
-    host = request.host
-    scheme = "https" if "railway.app" in host else request.scheme
-    return f"{scheme}://{host}/auth/callback"
-
 
 CLIENT_ID = 'f015ff07-5ad0-4a4a-9959-8fb45bf46e52'
 CLIENT_SECRET = 'gB.8Q~~PoWp4tU7qicQjXnWfwywyxbJ17PTtFcsy'
@@ -41,6 +36,11 @@ SCOPES = ['User.Read']  # גישה לקריאת פרטי משתמש
 ALLOWED_EMAILS = ['ofir@n3cure.com', 'yoram@n3cure.com', 'danny@n3cure.com']
 
 
+# def get_redirect_uri():
+#     host = request.host
+#     scheme = "https" if "railway.app" in host else request.scheme
+#     return f"{scheme}://{host}/auth/callback"
+
 def build_msal_app():
     return msal.ConfidentialClientApplication(
         CLIENT_ID,
@@ -48,9 +48,15 @@ def build_msal_app():
         client_credential=CLIENT_SECRET,
     )
 
+def acquire_token_using_refresh_token(msal_app, refresh_token):
+    result = msal_app.acquire_token_by_refresh_token(refresh_token, SCOPES)
+    if "access_token" in result:
+        return result["access_token"]
+    else:
+        return None
 @app.route('/api/download_db', methods=['GET'])
 def download_db():
-    return send_file('n3cure_crm.db', as_attachment=True)
+    return send_file('OT_crm.db', as_attachment=True)
 
 @app.route('/download_static', methods=['GET'])
 def download_static():
@@ -59,38 +65,10 @@ def download_static():
     return send_file('static_files.zip', as_attachment=True)
 
 
-@app.route('/login')
-def login():
-    msal_app = build_msal_app()
-    auth_url = msal_app.get_authorization_request_url(SCOPES, redirect_uri=get_redirect_uri())
-    return redirect(auth_url)
-
-
-@app.route('/auth/callback')
-def auth_callback():
-    msal_app = build_msal_app()
-    result = msal_app.acquire_token_by_authorization_code(
-        request.args['code'],
-        scopes=SCOPES,
-        redirect_uri=get_redirect_uri()  # משתמש ב-redirect הדינמי
-    )
-
-    if "access_token" in result:
-        user_info = result.get('id_token_claims')
-        user_email = user_info.get('preferred_username')
-
-        if user_email in ALLOWED_EMAILS:
-            session['user'] = user_info
-            return redirect(url_for('index'))
-        else:
-            return "You are not authorized to access this application.", 403
-
-    return 'Authentication failed', 400
-
-
 def query(sql: str = "", params: tuple = (), db_name=DATABASE_PATH):
     try:
         with sqlite3.connect(db_name) as conn:
+            conn.execute("PRAGMA foreign_keys = ON;")
             cur = conn.cursor()
             cur.execute(sql, params)  # Pass parameters to execute
             if sql.strip().lower().startswith('select'):
@@ -102,26 +80,187 @@ def query(sql: str = "", params: tuple = (), db_name=DATABASE_PATH):
     except Exception as e:
         print(f"Error: {e}")
         return None
-    
+
 
 @app.route('/', methods=['GET', 'POST'])
+def home():
+    return render_template('home.html')
+
+@app.route("/company_registration", methods=["POST"])
+def register_company():
+    data = request.json  # Expecting JSON data from frontend
+    company_name = data.get("company-name").upper()
+    company_slogan = data.get("company-slogan", "").title()
+
+    emails = data.get("emails", [])
+    
+    # המרת כל האימיילים לאותיות קטנות
+    emails = [email.lower() for email in emails]
+
+    emails_json = json.dumps(emails)  # Convert list of emails to JSON format
+
+    sql = "INSERT INTO Companies (name, emails, slogan) VALUES (?, ?, ?)"
+    query(sql, (company_name, emails_json, company_slogan))  # Ensure query function is working properly
+    return jsonify({"message": "Company registered successfully"}), 201
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        company_name = request.form.get('company-name').upper()
+
+        if company_name == "TRIAL CRM":
+            session['company_name'] = company_name
+            session['company_slogan'] = "Explore our CRM for Free"
+            session['valid_user'] = True  # Mark user as authenticated
+            return redirect(url_for('index'))  # Redirect to the index route
+        
+        msal_app = build_msal_app()
+
+        # יצירת URL להפניה ל-Microsoft עם redirect_uri תקין
+        auth_url = msal_app.get_authorization_request_url(
+            SCOPES,
+            redirect_uri=url_for('auth_callback', _external=True),  # הכוונה היא לחזור ל-/auth/callback
+            state=company_name  # שמירת שם החברה כ-state
+        )
+        return redirect(auth_url)
+    else:
+        return render_template('login.html')
+
+@app.route('/auth/callback', methods=['GET'])
+def auth_callback():
+    if 'code' not in request.args:
+        return redirect(url_for('login'))
+
+    company_name = request.args.get('state')
+    company_slogan = query("SELECT slogan FROM Companies WHERE name = ?", (company_name,))
+    if company_slogan:
+        company_slogan = company_slogan[0][0]
+    else:
+        company_slogan = ""
+
+    session['company_name'] = company_name
+    session['company_slogan'] = company_slogan
+
+    msal_app = build_msal_app()
+
+    # במקרה שאין refresh_token, אנחנו מבקשים קוד חדש
+    if 'refresh_token' in session:
+        refresh_token = session['refresh_token']
+        access_token = acquire_token_using_refresh_token(msal_app, refresh_token)
+    else:
+        result = msal_app.acquire_token_by_authorization_code(
+            request.args['code'],
+            scopes=SCOPES,
+            redirect_uri=url_for('auth_callback', _external=True)
+        )
+        access_token = result.get('access_token')
+        if "refresh_token" in result:
+            session['refresh_token'] = result['refresh_token']
+
+    if access_token:
+        # עכשיו נשלח בקשה ל-API של Microsoft Graph בעזרת access_token
+        headers = {"Authorization": f"Bearer {access_token}"}
+        user_info = requests.get("https://graph.microsoft.com/v1.0/me", headers=headers)
+
+        if user_info.status_code == 200:
+            user_info_json = user_info.json()
+            user_email = user_info_json.get('mail') or user_info_json.get('userPrincipalName')
+
+            row = query("SELECT emails FROM Companies WHERE name = ?", (company_name,))
+            if row:
+                try:
+                    allowed_emails = json.loads(row[0][0])
+                except Exception:
+                    flash("Error parsing company emails.", "warning")
+                    return redirect(url_for('login'))
+
+                if user_email in allowed_emails and company_name:
+                    # מוסיפים את המשתמש כמאומת למערכת
+                    session['valid_user'] = True
+                    return redirect(url_for('index'))  # לאחר הצלחה, נועלים את המשתמש במסך הדאשבורד
+                else:
+                    flash("Access denied. Your email is not authorized for this company.", "warning")
+                    return redirect(url_for('login'))
+            else:
+                flash("Company not found.", "warning")
+                return redirect(url_for('login'))
+        else:
+            return f"Failed to fetch user info: {user_info.status_code}", 400
+    else:
+        return "Authentication failed", 400
+
+@app.route('/dashboard')
+def dashboard():
+    if 'valid_user' not in session:
+        flash("Please log in first", "warning")
+        return redirect(url_for('login'))
+
+    company_name = session['company_name']
+    company_slogan = session['company_slogan']
+    
+    customers = query("SELECT * FROM customers WHERE OT_company = ? ORDER BY name ASC", (company_name,))
+    action_items = query("SELECT * FROM action_items WHERE OT_company = ?", (company_name,))
+    contacts_display = query("SELECT * FROM contacts WHERE OT_company = ?", (company_name,))
+    
+    return render_template('dashboard.html',
+                           company_name=company_name,
+                           company_slogan=company_slogan,
+                           customers=customers,
+                           action_items=action_items,
+                           contacts_display=contacts_display)
+
+
+@app.route('/logout')
+def logout():
+    session.clear()  # Clear all session data
+    flash("You have been logged out successfully", "success")
+    return redirect(url_for('login')) 
+
+@app.route('/index')
 def index():
-    if 'user' not in session:
-        return redirect(url_for('login'))  # אם אין אימות, הפנה לאימות
+    if 'valid_user' not in session:
+        flash("Please log in first", "warning")
+        return redirect(url_for('login'))
 
-    customers = query("SELECT * FROM customers ORDER BY name ASC")
-    action_items = query(f"SELECT * FROM action_items")
-    contacts_display = query(f"SELECT * FROM contacts")
-    return render_template('index.html', customers=customers,action_items=action_items, contacts_display=contacts_display)
+    company_name = session['company_name']
+    company_slogan = session['company_slogan']
+    
+    customers = query("SELECT * FROM customers WHERE OT_company = ? ORDER BY name ASC", (company_name,))
+    action_items = query("SELECT * FROM action_items WHERE OT_company = ?", (company_name,))
+    contacts_display = query("SELECT * FROM contacts WHERE OT_company = ?", (company_name,))
+    
+    return render_template('index.html',
+                           company_name=company_name,
+                           company_slogan=company_slogan,
+                           customers=customers,
+                           action_items=action_items,
+                           contacts_display=contacts_display)
 
-@app.route('/contacts', methods=['GET', 'POST'])
-def contacts():
-    contacts_display = query("SELECT * FROM contacts ORDER BY name ASC")
-    return render_template('contacts.html', contacts=contacts_display)
+# @app.route('/contacts', methods=['GET', 'POST'])
+# def contacts():
+#     company_name = session.get('company_name', '')
+#     company_slogan = session.get('company_slogan', '')
+#     contacts_display = query("SELECT * FROM contacts WHERE OT_company = ? ORDER BY name ASC", (company_name,))
+
+#     return render_template('contacts.html', contacts=contacts_display,company_name=company_name, company_slogan=company_slogan)
+
+@app.route("/get_contacts")
+def get_contacts():
+    company_name = session['company_name']
+    contacts_db = query("SELECT * FROM contacts WHERE OT_company = ? ORDER BY name ASC", (company_name,))
+    contacts = [
+        {"id": contact[0], "name": contact[1], "phone": contact[2], "email": contact[3], "role": contact[4]}
+        for contact in contacts_db
+    ]
+    return jsonify(contacts)
+
 
 
 @app.route('/customer_choosen', methods=['POST', 'GET'])
 def customer_choosen():
+    company_name = session.get('company_name', '')
+    company_slogan = session.get('company_slogan', '')
     customer_id = request.form.get('customer_id') or request.args.get('customer_id')
     customer_name = request.form.get('customer_name') or request.args.get('customer_name')
     item_category =request.form.get('item_category')or request.args.get('item_category')
@@ -169,8 +308,10 @@ def customer_choosen():
 
     # Redirect with anchor to #meeting section
     return render_template(
-        'index.html',
-        customers=query("SELECT * FROM customers ORDER BY name ASC"),
+        'dashboard.html',
+        customers=query("SELECT * FROM customers ORDER BY name ASC"), 
+        company_name=company_name,
+        company_slogan=company_slogan,
         selected_customer=customer[0],
         contacts=contacts,
         updates=updates,
@@ -184,9 +325,105 @@ def customer_choosen():
 
     )
 
+    
+@app.route("/get_customer/<int:customer_id>")
+def get_customer(customer_id):
+    # Fetch customer details
+    customer_query = "SELECT * FROM customers WHERE id = ?"
+    customer = query(customer_query, (customer_id,))
+    if not customer:
+        return jsonify({"error": "Customer not found"}), 404
+
+    company_name = customer[0][1]  # Assuming the second field is the company name
+
+    # Fetch related data
+    contacts_query = "SELECT * FROM contacts WHERE company = ?"
+    contacts = query(contacts_query, (company_name,))
+
+    meetings_query = "SELECT * FROM meetings WHERE company = ? ORDER BY date DESC"
+    meetings = query(meetings_query, (company_name,))
+
+    updates_query = "SELECT * FROM updates WHERE company = ? ORDER BY date DESC"
+    updates = query(updates_query, (company_name,))
+
+    technical_query = "SELECT * FROM technical WHERE company = ?"
+    technical = query(technical_query, (company_name,))
+
+    commercial_query = "SELECT * FROM commercial WHERE company = ?"
+    commercial = query(commercial_query, (company_name,))
+
+    orders_query = "SELECT * FROM orders WHERE company = ? ORDER BY date DESC"
+    orders = query(orders_query, (company_name,))
+
+    action_items_query = "SELECT * FROM action_items WHERE customer = ?"
+    action_items = query(action_items_query, (company_name,))
+
+    # Prepare data for each section
+    customer_info = {
+        "companyName": customer[0][1],
+        "country": customer[0][2],
+        "address": customer[0][3],
+        "status": customer[0][5],
+        "startDate": customer[0][7],
+        "ndaFile": customer[0][8],
+    }
+
+    technical_info = {
+        "line": technical[0][2] if technical else 'N/A',
+        "application": technical[0][3] if technical else 'N/A',
+        "lineSpeed": technical[0][4] if technical else 'N/A',
+        "lineWidth": technical[0][5] if technical else 'N/A',
+        "curingStatus": technical[0][6] if technical else 'N/A',
+        "targets": technical[0][7] if technical else 'N/A',
+    }
+
+    commercial_info = {
+        "annualVolume": commercial[0][2] if commercial else 'N/A',
+        "linesAmount": commercial[0][3] if commercial else 'N/A',
+    }
+
+    action_items_list = [
+        {"item": action_item[2], "responsible": action_item[3], "dueDate": action_item[4], "status": action_item[5], "category": action_item[6]}
+        for action_item in action_items
+    ]
+
+    contacts_list = [
+        {"id": contact[0], "name": contact[1], "phone": contact[2], "email": contact[3], "role": contact[4]}
+        for contact in contacts
+    ]
+
+    meetings_list = [
+        {"id": meeting[0], "title": meeting[2], "date": meeting[3], "attendees": meeting[4], "summary": meeting[5]}
+        for meeting in meetings
+    ]
+
+    updates_list = [
+        {"id": update[0], "date": update[2], "content": update[3], "nextStep": update[4], "file": update[5], "title": update[6]}
+        for update in updates
+    ]
+
+    orders_list = [
+        {"id": order[0], "material": order[2], "amount": order[3], "goal": order[4], "notes": order[5], "date": order[6], "orderNo": order[7]}
+        for order in orders
+    ]
+
+    # Return the data as JSON
+    return jsonify({
+        "customerInfo": customer_info,
+        "technicalInfo": technical_info,
+        "commercialInfo": commercial_info,
+        "contacts": contacts_list,
+        "meetings": meetings_list,
+        "updates": updates_list,
+        "orders": orders_list,
+        "actionItems": action_items_list
+    })
+
+
 
 @app.route('/add_customer', methods=['GET','POST'])
 def add_customer():
+    
     # Get data from the form
     name = request.form.get('name').title()
     country = request.form.get('country').title()
@@ -196,6 +433,7 @@ def add_customer():
     sales_rep = request.form.get('sales_rep').title()
     start_date = request.form.get('start_date')
     NDA_file = request.files.get('nda_file')
+    OT_company = session.get('company_name')
 
     NDA_file_name = None
     if NDA_file:
@@ -215,106 +453,128 @@ def add_customer():
 
     # Insert into the customers table
     customer_query = """
-    INSERT INTO customers (Name, Country, Address, Lead, Status, sales_rep, start_date, NDA_file) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO customers (Name, Country, Address, Lead, Status, sales_rep, start_date, NDA_file, OT_company) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
-    query(customer_query, (name, country, address, lead, status, sales_rep, start_date, NDA_file_name))
+    query(customer_query, (name, country, address, lead, status, sales_rep, start_date, NDA_file_name, OT_company))
 
     # Insert into the technical table
     technical_query = """
-    INSERT INTO technical (company, line, application, line_speed, line_width, curing, targets)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO technical (company, line, application, line_speed, line_width, curing, targets, OT_company)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """
-    query(technical_query, (name, line, application, line_speed, line_width, curing, targets))
+    query(technical_query, (name, line, application, line_speed, line_width, curing, targets, OT_company))
 
     # Insert into the commercial table
     commercial_query = """
-    INSERT INTO commercial (company, annual_volume, lines_amount)
-    VALUES (?, ?, ?)
+    INSERT INTO commercial (company, annual_volume, lines_amount, OT_company)
+    VALUES (?, ?, ?, ?)
     """
-    query(commercial_query, (name, annual_volume, potential_lines))
+    query(commercial_query, (name, annual_volume, potential_lines, OT_company))
 
     flash(f"Customer {name} has been added successfully.")
-    return index()  
+    return redirect(url_for('index'))  # חזרה לדף הראשי
 
 @app.route('/add_update', methods=['POST'])
 def add_update():
-    customer_id = request.form.get('customer_id')  # Get the customer ID
-    company = request.form.get('company').capitalize()
-    content = request.form.get('update').capitalize()
-    next_step = request.form.get('next_step').capitalize()
-    date = request.form.get('date')
-    file = request.files.get('file')
-    title= request.form.get('title').title()
-    action_items = request.form.get('update_action_items')
+    try:
+        content = request.form.get('update').capitalize()
+        next_step = request.form.get('next_step').capitalize()
+        date = request.form.get('date')
+        file = request.files.get('file')
+        title= request.form.get('title').title()
+        action_items = request.form.get('update_action_items')
+        OT_company = session.get('company_name')
 
-    file_name = None
-    if file:
-        file_name = secure_filename(f"{company}_{date}_{file.filename}")
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
-        file.save(file_path)
+        customer_id = request.form.get('customer_id')
+        query_customer = "SELECT Name FROM customers WHERE id = ?"
+        customer_name_result = query(query_customer, (customer_id,))
+        if customer_name_result:
+            customer_name = customer_name_result[0][0]  # Accessing the first tuple and then the first element
+        else:
+            customer_name = None
 
-    # Insert into the updates table
-    update_query = """
-    INSERT INTO updates (company, date, content, next_step, file, title)
-    VALUES (?, ?, ?, ?, ?, ?)
-    """
-    query(update_query, (company, date, content, next_step, file_name, title))
+        file_name = None
+        if file:
+            file_name = secure_filename(f"{customer_name}_{date}_{file.filename}")
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
+            file.save(file_path)
 
-    fetch_update_id_query = """
-            SELECT id FROM updates
-            WHERE company = ? AND title = ? AND date = ?
-            ORDER BY id DESC LIMIT 1
+        # Insert into the updates table
+        update_query = """
+        INSERT INTO updates (company, date, content, next_step, file, title, OT_company)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """
-    result = query(fetch_update_id_query, (company, title, date))
-        
-    if result:
-        update_id = result[0][0]  # Extract the ID
-    else:
-        print("Error: Meeting ID not found")
-        return "Error retrieving meeting ID", 500  # Handle error properly
-        
-    if action_items:
-        item_category = "update"
-        add_action_items(action_items,item_category, update_id)
+        query(update_query, (customer_name, date, content, next_step, file_name, title, OT_company))
 
-    flash(f"Update for {company} added successfully.")
-    return redirect(f'/customer_choosen?customer_id={customer_id}')
+        fetch_update_id_query = """
+                SELECT id FROM updates
+                WHERE company = ? AND title = ? AND date = ?
+                ORDER BY id DESC LIMIT 1
+            """
+        result = query(fetch_update_id_query, (customer_name, title, date))
+            
+        if result:
+            update_id = result[0][0]  # Extract the ID
+        else:
+            print("Error: update ID not found")
+            return "Error retrieving update ID", 500  # Handle error properly
+            
+        if action_items:
+            item_category = "update"
+            add_action_items(action_items,item_category, update_id)
+
+        return jsonify({"success": True, "customer_id": customer_id})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route('/add_order', methods=['POST'])
 def add_order():
-    customer_id = request.form.get('customer_id')  # Get the customer ID
-    company = request.form.get('company').capitalize()
-    material = request.form.get('material').upper()
-    amount = request.form.get('amount')
-    goal = request.form.get('goal').capitalize()
-    notes = request.form.get('notes').capitalize()
-    order_no = request.form.get('order_no').title()
-    date = request.form.get('date')
-    order_file = request.files.get('order_file')
-    invoice_file = request.files.get('invoice_file')
+    try:
+        material = request.form.get('material').upper()
+        amount = request.form.get('amount')
+        goal = request.form.get('goal').capitalize()
+        notes = request.form.get('notes').capitalize()
+        order_no = request.form.get('order_no').title()
+        date = request.form.get('date')
+        order_file = request.files.get('order_file')
+        invoice_file = request.files.get('invoice_file')
+        OT_company = session.get('company_name')
 
-    order_file_name = None
-    if order_file:
-        order_file_name = secure_filename(f"{company}_{date}_order_{order_file.filename}")
-        order_file_path = os.path.join(app.config['UPLOAD_FOLDER'], order_file_name)
-        order_file.save(order_file_path)
+            # Query the "customers" table to get the customer name based on the customer ID
+        customer_id = request.form.get('customer_id')
+        query_customer = "SELECT Name FROM customers WHERE id = ?"
+        customer_name_result = query(query_customer, (customer_id,))
+        if customer_name_result:
+            customer_name = customer_name_result[0][0]  # Accessing the first tuple and then the first element
+        else:
+            customer_name = None
 
-    invoice_file_name = None
-    if invoice_file:
-        invoice_file_name = secure_filename(f"{company}_{date}_invoice_{invoice_file.filename}")
-        invoice_file_path = os.path.join(app.config['UPLOAD_FOLDER'], invoice_file_name)
-        invoice_file.save(invoice_file_path)
+        order_file_name = None
+        if order_file:
+            order_file_name = secure_filename(f"{customer_name}_{date}_order_{order_file.filename}")
+            order_file_path = os.path.join(app.config['UPLOAD_FOLDER'], order_file_name)
+            order_file.save(order_file_path)
 
-    # Insert into the orders table
-    order_query = """
-    INSERT INTO orders (company, material, amount, goal, notes, date, order_no, order_file, invoice_file)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """
-    query(order_query, (company, material, amount, goal, notes, date, order_no, order_file_name, invoice_file_name))
+        invoice_file_name = None
+        if invoice_file:
+            invoice_file_name = secure_filename(f"{customer_name}_{date}_invoice_{invoice_file.filename}")
+            invoice_file_path = os.path.join(app.config['UPLOAD_FOLDER'], invoice_file_name)
+            invoice_file.save(invoice_file_path)
 
-    flash(f"Order for {company} added successfully.")
-    return redirect(f'/customer_choosen?customer_id={customer_id}')
+
+        # Insert into the orders table
+        order_query = """
+        INSERT INTO orders (company, material, amount, goal, notes, date, order_no, order_file, invoice_file, OT_company)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+        query(order_query, (customer_name, material, amount, goal, notes, date, order_no, order_file_name, invoice_file_name, OT_company))
+
+        # Send success response with customer_id
+        return jsonify({"success": True, "customer_id": customer_id})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route('/edit_update', methods=['POST'])
@@ -411,15 +671,23 @@ def delete_customer():
 @app.route('/update_customer_details', methods=['POST'])
 def update_customer_details():
     customer_id = request.form.get('customer_id')
-    name = request.form.get('name').title()
+    name = request.form.get('companyName').title()
     country = request.form.get('country').title()
     address = request.form.get('address')
-    lead = request.form.get('lead').title()
+    # lead = request.form.get('lead').title()
     status = request.form.get('status')
-    sales_rep = request.form.get('sales_rep').title()
-    start_date = request.form.get('start_date')
-    NDA_file = request.files.get('nda_file')
+    # sales_rep = request.form.get('sales_rep').title()
+    start_date = request.form.get('startDate')
+    NDA_file = request.files.get('ndaFile')
 
+    query_customer = "SELECT Name FROM customers WHERE id = ?"
+    customer_name_result = query(query_customer, (customer_id,))
+
+    # If the customer is found, assign the customer name, otherwise set it to None
+    if customer_name_result:
+        customer_name = customer_name_result[0][0]  # Accessing the first tuple and then the first element
+    else:
+        customer_name = None
 
     current_nda_file = query(f"SELECT nda_file FROM customers WHERE id = {customer_id} ")
     current_file_data = current_nda_file[0][0]
@@ -434,130 +702,145 @@ def update_customer_details():
     # Update customer details
     query("""
         UPDATE customers
-        SET Name = ?, Country = ?, Address = ?, Lead = ?, Status = ?, sales_rep = ?, start_date = ?, NDA_file = ?
+        SET Name = ?, Country = ?, Address = ?, Status = ?, start_date = ?, NDA_file = ?
         WHERE id = ?
-    """, (name, country, address, lead, status, sales_rep, start_date, current_file_data, customer_id))
+    """, (name, country, address, status, start_date, current_file_data, customer_id))
 
     
-    # Update technical data
-    for key, value in request.form.items():
-        if key.startswith('technical_id_'):
-            technical_id = value
-            index = key.split('_')[-1]
-            line = request.form.get(f'line_{index}').capitalize()
-            application = request.form.get(f'application_{index}').capitalize()
-            line_speed = request.form.get(f'line_speed_{index}')
-            line_width = request.form.get(f'line_width_{index}')
-            curing = request.form.get(f'curing_{index}').capitalize()
-            targets = request.form.get(f'targets_{index}').capitalize()
-            query("""
+    line = request.form.get('line').upper()
+    application = request.form.get('application').title()
+    line_speed = request.form.get('lineSpeed')
+    line_width = request.form.get('lineWidth').upper()
+    curing = request.form.get('curingStatus')
+    targets = request.form.get('targets')
+    query("""
                 UPDATE technical
                 SET line = ?, application = ?, line_speed = ?, line_width = ?, curing = ?, targets = ?
-                WHERE id = ?
-            """, (line, application, line_speed, line_width, curing, targets, technical_id))
+                WHERE company = ?
+            """, (line, application, line_speed, line_width, curing, targets, customer_name))
 
 
-    commercial_id = request.form.get('commercial_id')
-    if commercial_id:
-        annual_volume = request.form.get(f'annual_volume')
-        potential_lines = request.form.get(f'potential_lines')
+    annual_volume = request.form.get(f'annualVolume')
+    potential_lines = request.form.get(f'linesAmount')
 
-        query("""
+    query("""
                 UPDATE commercial
                 SET annual_volume = ?, lines_amount = ?
-                WHERE id = ?
-            """, (annual_volume, potential_lines, commercial_id))
-    else: 
+                WHERE company = ?
+            """, (annual_volume, potential_lines, customer_name))
 
-        company_name = name  # Assuming 'name' is the company name in the customers table
-        annual_volume = request.form.get('annual_volume')
-        potential_lines = request.form.get('potential_lines')
-
-        query("""
-            INSERT INTO commercial (company, annual_volume, lines_amount)
-            VALUES (?, ?, ?)
-        """, (company_name, annual_volume, potential_lines))
 
     flash("Customer details updated successfully.")
-    return redirect(f'/customer_choosen?customer_id={customer_id}')
+    return jsonify({"success": True, "customer_id": customer_id})  # Send JSON response
 
 @app.route('/add_contact', methods=['POST'])
 def add_contact():
-    # Get the data from the form
-    customer_id = request.form.get('customer_id')
-    contact_name = request.form['contact_name'].title()
-    contact_email = request.form['contact_email']
-    contact_phone = request.form['contact_phone']
-    contact_role = request.form['contact_role'].title()
-    company= request.form.get('company')
+    try:
+        # Get the data from the form
+        contact_name = request.form['contact_name'].title()
+        contact_email = request.form['contact_email']
+        contact_phone = request.form['contact_phone']
+        contact_role = request.form['contact_role'].title()
+        OT_company = session.get('company_name')
 
-    contact_query = """
-        INSERT INTO contacts (name, phone, email, role, company)
-        VALUES (?, ?, ?, ?, ?)
-    """
-    query(contact_query, (contact_name, contact_phone, contact_email, contact_role, company))
+        # Query the "customers" table to get the customer name based on the customer ID
+        customer_id = request.form.get('customer_id')
+        query_customer = "SELECT Name FROM customers WHERE id = ?"
+        customer_name_result = query(query_customer, (customer_id,))
+        if customer_name_result:
+            customer_name = customer_name_result[0][0]  # Accessing the first tuple and then the first element
+        else:
+            customer_name = None
 
-    return redirect(f'/customer_choosen?customer_id={customer_id}')
+        # Insert the contact into the "contacts" table
+        contact_query = """
+            INSERT INTO contacts (name, phone, email, role, company, OT_company)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """
+        query(contact_query, (contact_name, contact_phone, contact_email, contact_role, customer_name, OT_company))
 
+        # Send success response with customer_id
+        return jsonify({"success": True, "customer_id": customer_id})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    
 
 @app.route('/delete_contact/<int:contact_id>', methods=['POST'])
 def delete_contact(contact_id):
-    # Delete the meeting from the database
-    customer_id = request.form.get('customer_id')
-    delete_query = "DELETE FROM contacts WHERE id = ?"
-    query(delete_query, (contact_id,))
+    try:
+        # Get customer_id from form data
+        customer_id = request.form.get('customer_id')
 
-    return redirect(f'/customer_choosen?customer_id={customer_id}')
+        # Delete the contact from the database
+        delete_query = "DELETE FROM contacts WHERE id = ?"
+        query(delete_query, (contact_id,))
 
+        # Send the response with success flag and customer_id
+        return redirect(url_for('index'))  # חזרה לדף הראשי
 
+    except Exception as e:
+        print("Error deleting contact:", str(e))  # Log error
+        return jsonify({"success": False, "error": str(e)}), 500  # Return JSON error
 
 @app.route('/add_meeting', methods=['POST'])
 def add_meeting():
-    customer_id = request.form.get('customer_id')
-    company = request.form.get('company')
-    title = request.form.get('title').title()
-    attendees = request.form.get('attendees')
-    date = request.form.get('date')
-    summary = request.form.get('summary').capitalize()
-    
-    # Get the action items from the form (it will be a JSON string)
-    action_items = request.form.get('action_items')
+    try:
+        title = request.form.get('title').title()
+        attendees = request.form.get('attendees')
+        date = request.form.get('date')
+        summary = request.form.get('summary').capitalize()
+        OT_company = session.get('company_name')
 
-    # Prepare the SQL query to insert the meeting details
-    meeting_query = """
-        INSERT INTO meetings (company, title, date, attendees, summary)
-        VALUES (?, ?, ?, ?, ?)
-    """
+        # Query the "customers" table to get the customer name based on the customer ID
+        customer_id = request.form.get('customer_id')
+        query_customer = "SELECT Name FROM customers WHERE id = ?"
+        customer_name_result = query(query_customer, (customer_id,))
+        if customer_name_result:
+            customer_name = customer_name_result[0][0]  # Accessing the first tuple and then the first element
+        else:
+            customer_name = None
+        # Get the action items from the form (it will be a JSON string)
+        action_items = request.form.get('action_items')
 
-    query(meeting_query, (company, title, date, attendees, summary))
+        # Prepare the SQL query to insert the meeting details
+        meeting_query = """
+            INSERT INTO meetings (company, title, date, attendees, summary, OT_company)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """
 
-        # Retrieve the last inserted meeting by filtering with unique values
-    fetch_meeting_id_query = """
-        SELECT id FROM meetings
-        WHERE company = ? AND title = ? AND date = ?
-        ORDER BY id DESC LIMIT 1
-    """
-    result = query(fetch_meeting_id_query, (company, title, date))
-    
-    if result:
-        meeting_id = result[0][0]  # Extract the ID
-    else:
-        print("Error: Meeting ID not found")
-        return "Error retrieving meeting ID", 500  # Handle error properly
-    
-    if action_items:
-        item_category = "meeting"
-        add_action_items(action_items,item_category, meeting_id)
+        query(meeting_query, (customer_name, title, date, attendees, summary, OT_company))
 
-    return redirect(f'/customer_choosen?customer_id={customer_id}')
+            # Retrieve the last inserted meeting by filtering with unique values
+        fetch_meeting_id_query = """
+            SELECT id FROM meetings
+            WHERE company = ? AND title = ? AND date = ?
+            ORDER BY id DESC LIMIT 1
+        """
+        result = query(fetch_meeting_id_query, (customer_name, title, date))
+        
+        if result:
+            meeting_id = result[0][0]  # Extract the ID
+        else:
+            print("Error: Meeting ID not found")
+            return "Error retrieving meeting ID", 500  # Handle error properly
+        
+        if action_items:
+            item_category = "meeting"
+            add_action_items(action_items,item_category, meeting_id)
+
+        return jsonify({"success": True, "customer_id": customer_id})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 def add_action_items(action_items,item_category, meeting_id):
     # Parse action_items from JSON string to a list of dictionaries
     action_items = json.loads(action_items)
-    
+    OT_company = session.get('company_name')
+
     action_item_query = """
-    INSERT INTO action_items (customer, item, responsible, due_date, status, item_category, category_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO action_items (customer, item, responsible, due_date, status, item_category, category_id, OT_company)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """
     
     # Loop through each action item and insert it into the action_items table
@@ -569,6 +852,7 @@ def add_action_items(action_items,item_category, meeting_id):
             item['due_date'],
             item['status'],
             item_category,
+            OT_company,
             meeting_id  # Use the meeting_id as category_id
         ))
 
@@ -576,66 +860,83 @@ def add_action_items(action_items,item_category, meeting_id):
 def delete_action_item(action_item_id):
     delete_query = "DELETE FROM action_items WHERE id = ?"
     query(delete_query, (action_item_id,))
-    return redirect(url_for('index'))
+    return redirect(url_for('dashboard'))
 
 
-@app.route('/delete_meeting/<int:meeting_id>', methods=['POST'])
-def delete_meeting(meeting_id):
-    # Delete the meeting from the database
-    customer_id = request.form.get('customer_id')
+@app.route('/delete_meeting', methods=['POST'])
+def delete_meeting():
+    try:
+        meeting_id = request.form.get('meeting_id')
 
-    delete_action_items_query = "DELETE FROM action_items WHERE category_id = ? AND item_category = 'meeting'"
-    query(delete_action_items_query, (meeting_id,))
+        delete_action_items_query = "DELETE FROM action_items WHERE category_id = ? AND item_category = 'meeting'"
+        query(delete_action_items_query, (meeting_id,))
 
-    delete_query = "DELETE FROM meetings WHERE id = ?"
-    query(delete_query, (meeting_id,))
+        delete_query = "DELETE FROM meetings WHERE id = ?"
+        query(delete_query, (meeting_id,))
 
-    flash("Meeting deleted successfully.")
-    return redirect(f'/customer_choosen?customer_id={customer_id}')
+        # Send the response with success flag and customer_id/
+        return redirect(url_for('index'))  # חזרה לדף הראשי
+    except Exception as e:
+        print("Error deleting meeting:", str(e))  # Log error
+        return jsonify({"success": False, "error": str(e)}), 500  # Return JSON error
 
-@app.route('/delete_order/<int:order_id>', methods=['POST'])
-def deleteorder(order_id):
-    customer_id = request.form.get('customer_id')
-    delete_query = "DELETE FROM orders WHERE id = ?"
-    query(delete_query, (order_id,))
+@app.route('/delete_order', methods=['POST'])
+def delete_order():
+    try:
+        order_id = request.form.get('order_id')
+        delete_query = "DELETE FROM orders WHERE id = ?"
+        query(delete_query, (order_id,))
 
-    flash("Order deleted successfully.")
-    return redirect(f'/customer_choosen?customer_id={customer_id}')
+        # Send the response with success flag and customer_id
+        return redirect(url_for('index'))  # חזרה לדף הראשי
 
-@app.route('/delete_update/<int:update_id>', methods=['POST'])
-def deleteupdate(update_id):
-    customer_id = request.form.get('customer_id')
+    except Exception as e:
+        print("Error deleting order:", str(e))  # Log error
+        return jsonify({"success": False, "error": str(e)}), 500  # Return JSON error
 
-    delete_action_items_query = "DELETE FROM action_items WHERE category_id = ? AND item_category = 'update'"
-    query(delete_action_items_query, (update_id,))
+@app.route('/delete_update', methods=['POST'])
+def delete_update():
+    try:
+        update_id = request.form.get('update_id')
 
-    delete_query = "DELETE FROM updates WHERE id = ?"
-    query(delete_query, (update_id,))
+        delete_action_items_query = "DELETE FROM action_items WHERE category_id = ? AND item_category = 'update'"
+        query(delete_action_items_query, (update_id,))
 
-    flash("Update deleted successfully.")
-    return redirect(f'/customer_choosen?customer_id={customer_id}')
+        delete_query = "DELETE FROM updates WHERE id = ?"
+        query(delete_query, (update_id,))
 
+        return redirect(url_for('index'))  # חזרה לדף הראשי
+
+    except Exception as e:
+        print("Error deleting order:", str(e))  # Log error
+        return jsonify({"success": False, "error": str(e)}), 500  # Return JSON error
 
 @app.route('/edit_contact', methods=['POST'])
 def edit_contact():
-    contact_id = request.form.get('contact_id')
-    name = request.form.get('contact_name').title()
-    phone = request.form.get('contact_phone')
-    email = request.form.get('contact_email')
-    role = request.form.get('contact_role').title()
-    customer_id = request.form.get('customer_id')
+    try:
+        contact_id = request.form.get('contact_id')
+        name = request.form.get('contact_name').title()
+        phone = request.form.get('contact_phone')
+        email = request.form.get('contact_email')
+        role = request.form.get('contact_role').title()
+        customer_id = request.form.get('customer_id')
 
-    # Update the database
-    update_query = """
-    UPDATE contacts
-    SET name = ?, phone = ?, email = ?, role = ?
-    WHERE id = ?
-    """
-    query(update_query, (name, phone, email, role, contact_id))
+        if not contact_id:
+            return jsonify({"success": False, "error": "Missing contact ID"}), 400
 
-    flash("Contact updated successfully.")
-    return redirect(f'/customer_choosen?customer_id={customer_id}')
+        # Update the database
+        update_query = """
+        UPDATE contacts
+        SET name = ?, phone = ?, email = ?, role = ?
+        WHERE id = ?
+        """
+        query(update_query, (name, phone, email, role, contact_id))
 
+        return jsonify({"success": True, "customer_id": customer_id})  # Send JSON response
+
+    except Exception as e:
+        print("Error updating contact:", str(e))  # Log error in terminal
+        return jsonify({"success": False, "error": str(e)}), 500  # Return JSON error
 
 
 @app.route('/edit_meeting', methods=['POST'])
@@ -684,7 +985,7 @@ def edit_action_items():
         ))
     
     flash("Action items updated successfully.")
-    return redirect(url_for('index'))
+    return redirect(url_for('dashboard'))
 
 
 # def generate_meeting_email(meeting_id):

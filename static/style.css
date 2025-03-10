@@ -1355,3 +1355,19 @@ a.logout-link {
     flex-wrap: wrap;
     gap: 20px;
 }
+
+.fixed-header {
+    position: fixed;
+    top: -30px; /* מעלה את הלוגו קצת למעלה */
+    right: 0;
+    width: auto;
+    padding: 10px 20px;
+    background: transparent; /* או צבע רקע אם תרצה */
+    z-index: 1000; /* שומר שהלוגו יהיה מעל כל האלמנטים */
+}
+
+.logo {
+    width: 200px; /* ניתן להתאים לפי הצורך */
+    height: auto;
+}
+  

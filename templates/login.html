@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/OT-LOGO.png') }}" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OT CRM - Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='home_style.css') }}">
+
+  </head>
+  <body>
+    <div id="app">
+      <header class="fixed-header">
+        <img src="{{ url_for('static', filename='img/OT-LOGO.png') }}" alt="OT CRM Logo" class="logo">
+      </header>
+      <div class="login-container">
+        <div class="login-content">
+          <h1>Welcome to <span class="highlight">OT CRM</span></h1>
+          <p class="subtitle">Access your business dashboard</p>
+
+          
+          <div class="login-form-container">
+            <h2>Company Login</h2>
+            <form id="login-form" action="/login" method="POST">
+              <div class="form-group">
+                <label for="company-name">Company Name</label>
+                <input type="text" id="company-name" name="company-name" required>
+                <div class="error-message" id="company-name-error"></div>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% if messages %}
+                    <div id="flash-messages">
+                      {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                {% endwith %}
+              </div>
+              
+              <div class="form-actions">
+                <a href="/" class="secondary-btn">Back to Register</a>
+                <button type="submit" class="primary-btn">Go to Dashboard</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="{{ url_for('static', filename='login.js') }}">    </script>
+  </body>
+</html>

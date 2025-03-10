@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/OT-LOGO.png') }}" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>N3cure CRM - Plastic Additives Solutions</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
@@ -11,16 +12,18 @@
         <div class="main-header">
             <header class="header">
                 <div class="logo-container">
-                    <h1><a href="/">N3cure CRM</a></h1>
-                    <p>Cross-linking Solutions</p>
+                    <h1><a href="/dashboard">{{company_name}} CRM</a></h1>
+                    <p>{{company_slogan}}</p>
                 </div>
-                <a href="/"><img class="logoimg" src="static\img\logo.png" alt="n3cure_logo"></a>
+                <header class="fixed-header">
+                    <img src="{{ url_for('static', filename='img/OT-LOGO.png') }}" alt="OT CRM Logo" class="logo">
+                </header>                
             </header>
             <nav class="navbar">
-                <button class="add-customer-btn" onclick="window.location.href='/'">+ Add Customer</button>
-                <button class="customer-list-btn" onclick="window.location.href='/'">Customer List</button>
+                <button class="add-customer-btn" onclick="window.location.href='/dashboard'">+ Add Customer</button>
+                <button class="customer-list-btn" onclick="window.location.href='/dashboard'">Customer List</button>
                 <button class="contacts-display-btn" onclick="window.location.href='/contacts'">Contacts List</button>
-                <a href="/"><button class="add-customer-btn">Action Items</button></a>
+                <a href="/dashboard"><button class="add-customer-btn">Action Items</button></a>
             </nav>
         </div>
 

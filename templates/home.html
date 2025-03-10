@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/OT-LOGO.png') }}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OT CRM - Welcome</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='home_style.css') }}">
+  </head>
+  <body>
+    <div id="app">
+      <header class="fixed-header">
+        <img src="{{ url_for('static', filename='img/OT-LOGO.png') }}" alt="OT CRM Logo" class="logo">
+      </header>
+      
+      <div class="welcome-container">
+        <div id="welcome-content" class="welcome-content">
+          <h1>Welcome to <span class="highlight">OT CRM</span></h1>
+          <p class="subtitle">Streamline your business operations with our powerful CRM solution</p>
+          <p class="description">Get started in minutes with our simple registration process</p>
+          <button id="register-btn" class="primary-btn">Register your company</button>
+          <a href="/login" class="secondary-btn login-link">Already registered? Login</a>
+          <form action="/login" method="POST">
+            <input type="hidden" name="company-name" value="TRIAL CRM">
+            <button type="submit" class="third-btn">Try for Free</button>
+          </form>
+        </div>
+      </div>
+
+      <div id="registration-form" class="hidden">
+        <div class="form-container">
+          <h2>Company Registration</h2>
+          <p class="form-subtitle">Quick and easy registration process</p>
+
+          <form id="company-form" action="/company_registration" method="POST">
+            <div class="form-group">
+              <label for="company-name">Company Name</label>
+              <input type="text" id="company-name" name="company-name" required>
+              <label for="company-slogan">Company Slogan</label>
+              <input type="text" id="company-slogan" name="company-slogan" required>
+              <div class="error-message" id="company-name-error"></div>
+            </div>
+            
+            <div class="form-group">
+              <label>Company Emails (for user access)</label>
+              <div id="emails-container">
+                <div class="email-input-group">
+                  <input type="email" class="email-input" placeholder="example@company.com" required>
+                  <div class="error-message"></div>
+                </div>
+              </div>
+              <button type="button" id="add-email-btn" class="secondary-btn">+ Add another email</button>
+            </div>
+            
+            <div class="form-actions">
+              <button type="button" id="cancel-btn" class="cancel-btn">Cancel</button>
+              <button type="submit" class="primary-btn">Submit Registration</button>
+            </div>
+          </form>
+
+          <div id="success-message" class="success-message" style="display: none;">
+            <h1>Registration Successful!</h1>
+            <p class="subtitle">Your company has been successfully updated, click the button below to start:</p>
+            <a href="{{ url_for('login') }}">
+                <button class="primary-btn">Login</button>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='home.js') }}"></script>
+  </body>
+</html>
