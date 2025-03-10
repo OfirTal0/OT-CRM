@@ -32,10 +32,6 @@ TENANT_ID = '2f359e1f-c37b-4267-a0c0-5110b8b578ba'
 AUTHORITY = f'https://login.microsoftonline.com/{TENANT_ID}'
 SCOPES = ['User.Read']  # גישה לקריאת פרטי משתמש
 
-# רשימת אימיילים מורשים
-ALLOWED_EMAILS = ['ofir@n3cure.com', 'yoram@n3cure.com', 'danny@n3cure.com']
-
-
 # def get_redirect_uri():
 #     host = request.host
 #     scheme = "https" if "railway.app" in host else request.scheme
@@ -120,7 +116,7 @@ def login():
         # יצירת URL להפניה ל-Microsoft עם redirect_uri תקין
         auth_url = msal_app.get_authorization_request_url(
             SCOPES,
-            redirect_uri=url_for('auth_callback', _external=True),  # הכוונה היא לחזור ל-/auth/callback
+            redirect_uri=url_for('auth_callback', _external=True,  _scheme='https'),  # הכוונה היא לחזור ל-/auth/callback
             state=company_name  # שמירת שם החברה כ-state
         )
         return redirect(auth_url)
@@ -152,7 +148,7 @@ def auth_callback():
         result = msal_app.acquire_token_by_authorization_code(
             request.args['code'],
             scopes=SCOPES,
-            redirect_uri=url_for('auth_callback', _external=True)
+            redirect_uri=url_for('auth_callback', _external=True, _scheme='https')
         )
         access_token = result.get('access_token')
         if "refresh_token" in result:
