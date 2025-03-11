@@ -227,6 +227,7 @@ def index():
     contacts_display = query("SELECT * FROM contacts WHERE OT_company = ?", (company_name,))
     
     return render_template('index.html',
+                           current_time=datetime.now(),
                            company_name=company_name,
                            company_slogan=company_slogan,
                            customers=customers,
@@ -478,7 +479,7 @@ def add_update():
         date = request.form.get('date')
         file = request.files.get('file')
         title= request.form.get('title').title()
-        action_items = request.form.get('update_action_items')
+        action_items = request.form.get('action_items')
         OT_company = session.get('company_name')
 
         customer_id = request.form.get('customer_id')
@@ -517,7 +518,7 @@ def add_update():
             
         if action_items:
             item_category = "update"
-            add_action_items(action_items,item_category, update_id)
+            add_action_items(action_items,item_category, update_id, customer_name)
 
         return jsonify({"success": True, "customer_id": customer_id})
     except Exception as e:
@@ -823,13 +824,13 @@ def add_meeting():
         
         if action_items:
             item_category = "meeting"
-            add_action_items(action_items,item_category, meeting_id)
+            add_action_items(action_items,item_category, meeting_id, customer_name)
 
         return jsonify({"success": True, "customer_id": customer_id})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
-def add_action_items(action_items,item_category, meeting_id):
+def add_action_items(action_items,item_category, meeting_id, customer_name):
     # Parse action_items from JSON string to a list of dictionaries
     action_items = json.loads(action_items)
     OT_company = session.get('company_name')
@@ -842,14 +843,14 @@ def add_action_items(action_items,item_category, meeting_id):
     # Loop through each action item and insert it into the action_items table
     for item in action_items:
         query(action_item_query, (
-            item['customer'],
+            customer_name,
             item['item'],
             item['responsible'],
             item['due_date'],
             item['status'],
             item_category,
-            OT_company,
-            meeting_id  # Use the meeting_id as category_id
+            meeting_id,
+            OT_company
         ))
 
 @app.route('/delete_action_item/<int:action_item_id>', methods=['POST'])

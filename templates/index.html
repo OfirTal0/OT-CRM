@@ -12,15 +12,23 @@
   <body>
     <div class="app-container">
       <!-- Left sidebar with customer list -->
-      <aside class="sidebar">
+      <button class="hamburger-menu" onclick="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+      </button>
+  
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar">
         <div class="logo-container">
-            <h1>OT <span class="highlight">CRM</span></h1>
-            <a href="/logout">Logout</a>
-
+          <h1>OT <span class="highlight">CRM</span></h1>
+          <a href="/logout">Logout</a>
         </div>
+        
+        <!-- Search Customers -->
         <div class="search-container">
           <input type="text" id="customerSearch" placeholder="Search customers..." />
         </div>
+        
+        <!-- Customers List -->
         <div class="customers-list" id="customersList">
           <div class="customer-list-content">
             {% for customer in customers %}
@@ -52,8 +60,8 @@
           <div class="actions-header">
             <h2>Open Action Items</h2>
             <div class="action-buttons">
-              <button id="addCustomerBtn" class="btn primary">Add Customer</button>
-              <button id="contactsListBtn" class="btn secondary">Contacts List</button>
+              <button  id="addCustomerBtn" class="btn primary">Add Customer</button>
+              <button  id="contactsListBtn" class="btn secondary">Contacts List</button>
             </div>
           </div>
           <div class="table-container">
@@ -88,7 +96,11 @@
                 {% else %}
                   {% for action_item in action_items %}
                     {% if action_item[5] != "Completed" %}
-                      <tr class="action-item-row">
+                      {% set due_date = action_item[4] | string %}
+                      {% set current_date = current_time.strftime('%Y-%m-%d') %}
+                      {% set is_overdue = due_date < current_date %}
+            
+                      <tr class="action-item-row {% if is_overdue %}overdue{% endif %}">
                         <td>{{ action_item[1] }}</td>
                         <td>{{ action_item[2] }}</td>
                         <td>{{ action_item[3] }}</td>
@@ -100,10 +112,10 @@
                             {% elif action_item[5] == 'Not Started' %}not-started
                             {% elif action_item[5] == 'Completed' %}completed
                             {% endif %}
+                            {% if is_overdue %} overdue-status{% endif %}
                             ">{{ action_item[5] }}</span>
                         </td>
                         <td>
-                          <!-- Form to navigate to the specific action item -->
                           <form method="GET" action="{{ url_for('customer_choosen') }}" class="go-to-action-item-form">
                             <input type="hidden" name="customer_name" value="{{ action_item[1] }}">
                             <input type="hidden" name="category_id" value="{{ action_item[7] }}"> 
@@ -117,7 +129,7 @@
                     {% endif %}
                   {% endfor %}
                 {% endif %}
-              </tbody>
+            </tbody>
             </table>
           </div>
         </div>
@@ -145,10 +157,7 @@
               <li data-section="customerMeetings">Meetings</li>
               <li data-section="customerUpdates">Updates</li>
             </ul>
-            <form action="{{ url_for('delete_customer') }}" method="POST" onsubmit="return confirmDelete(event)" >
-              <input type="hidden" name="customer_id" id="customerIdInput">
-              <button type="submit" class="btn danger">Delete Customer</button>
-            </form>          
+         
           </nav>
 
           <div id="customerSections" class="customer-sections">
@@ -156,7 +165,14 @@
             <div id="companyInfo" class="customer-section active">
               <div class="section-header">
                 <h2>Company Information</h2>
-                <button class="btn edit-btn">Edit</button>
+                <div style="display:flex; gap:5px;">
+                  <button class="btn primary edit-btn">Edit</button>
+
+                  <form action="{{ url_for('delete_customer') }}" method="POST" onsubmit="return confirmDelete(event)" >
+                    <input type="hidden" name="customer_id" id="customerIdInput">
+                    <button id="deleteCustomerBtn" type="submit" class="btn danger">Delete Customer</button>
+                  </form> 
+                </div>
               </div>
               <div class="section-content view-mode">
                 <div class="info-group">
@@ -318,7 +334,6 @@
                       <th>Material</th>
                       <th>Amount</th>
                       <th>Description</th>
-                      <th>Notes</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -605,13 +620,13 @@
                     <label for="summary">Summary:</label>
                     <textarea id="meeting-summary" name="summary" required></textarea>
                   </div>
-                  <div id="action-items-container">
-                    <h4>Action Items</h4>
-                    <button type="button" id="add-action-item-btn">Add Action Item</button>
-                    <div id="action-items-list"></div>
-                </div>
               </div>
-
+              <div style="display:flex; justify-content:space-between;">
+                <h3>Action Items</h3>
+                <button type="button" class="btn secondary add-action-item">Add Action Item</button>
+              </div>
+              <div id="action-items-container" class="action-items-container"></div>
+      
                 <!-- Buttons -->
                 <div class="button-group">
                   <button type="submit" class="btn primary">Submit Order</button>
@@ -653,13 +668,12 @@
                     <label for="file">Attach File:</label>
                     <input type="file" id="file" name="file" accept=".pdf,.doc,.docx,.xls,.xlsx">
                   </div>
-                  <div id="action-items-container">
-                    <h4>Action Items</h4>
-                    <button type="button" id="add-action-item-btn">Add Action Item</button>
-                    <div id="action-items-list"></div>
-                </div>
               </div>
-
+              <div style="display:flex; justify-content:space-between;">
+                <h3>Action Items</h3>
+                <button type="button" class="btn secondary add-action-item">Add Action Item</button>
+              </div>
+              <div id="action-items-container" class="action-items-container"></div>
                 <!-- Buttons -->
                 <div class="button-group">
                   <button type="submit" class="btn primary">Submit Order</button>
@@ -752,6 +766,11 @@
         // If the user confirms, allow form submission to proceed
         return true;
     }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById("sidebar");
+      sidebar.classList.toggle("open");
+  }
 
     </script>
     <script src="{{ url_for('static', filename='index.js') }}" defer></script>

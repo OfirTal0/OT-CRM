@@ -422,6 +422,12 @@
     h1 {
       font-size: 2.2rem;
     }
+
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
     
     .illustration {
       gap: 1rem;
@@ -445,6 +451,11 @@
   @media (max-width: 480px) {
     #app {
       padding: 1rem;
+    }
+
+    .buttons {
+      display: flex;
+      flex-direction: column;
     }
     
     .welcome-content {

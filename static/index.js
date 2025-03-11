@@ -270,20 +270,23 @@ function fetchCustomerDetails(customerId) {
               <strong>Phone:</strong> ${contact.phone}
             </span>
           </div>
-          <div class="actions">
-          <button class="btn small primary edit-contact-btn"
-                    data-id="${contact.id}"
-                    data-name="${contact.name}"
-                    data-role="${contact.role}"
-                    data-email="${contact.email}"
-                    data-phone="${contact.phone}">
-                    Edit
-            </button>
-                    <form action="/delete_contact/${contact.id}" method="POST" id="deleteContactForm" onsubmit="return confirmDelete(event)">
-                    <input type="hidden" value="${customerId}" name="customer_id" id="customerIdInput">
-                    <button class="btn small danger delete-contact" type="submit">Delete</button>
-                    </form>
-          </div>
+      <div class="actions">
+        <button class="btn small primary edit-contact-btn"
+                data-id="${contact.id}"
+                data-name="${contact.name}"
+                data-role="${contact.role}"
+                data-email="${contact.email}"
+                data-phone="${contact.phone}"
+                title="Edit">
+          <i class="fas fa-edit"></i>
+        </button>
+        <form action="/delete_contact/${contact.id}" method="POST" id="deleteContactForm" onsubmit="return confirmDelete(event)">
+          <input type="hidden" value="${customerId}" name="customer_id" id="customerIdInput">
+          <button class="btn small danger delete-contact" type="submit" title="Delete">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </form>
+      </div>
         `;
         contactCardsContainer.appendChild(contactCard);
     });
@@ -305,15 +308,20 @@ function fetchCustomerDetails(customerId) {
         <td>${order.material}</td>
         <td>${order.amount}</td>
         <td>${order.goal}</td>
-        <td>${order.notes}</td>
-        <td class="action-cell">
-            <button class="btn small primary view-order" data-id="${order.id}">View</button>        
-            <button class="btn small secondary edit-order" data-id="${order.id}">Edit</button>
-          <form action="/delete_order" method="POST" id="deleteOrderForm" onsubmit="return confirmDelete(event)">
-            <input type="hidden" value="${order.id}" name="order_id">
-            <button class="btn small danger delete-order" type="submit">Delete</button>
-          </form>
-        </td>
+    <td class="action-cell">
+        <button class="btn small primary view-order" data-id="${order.id}" title="View">
+          <i class="fas fa-eye"></i>
+        </button>
+        <button class="btn small secondary edit-order" data-id="${order.id}" title="Edit">
+          <i class="fas fa-edit"></i>
+        </button>
+        <form action="/delete_order" method="POST" id="deleteOrderForm" onsubmit="return confirmDelete(event)">
+          <input type="hidden" value="${order.id}" name="order_id">
+          <button class="btn small danger delete-order" type="submit" title="Delete">
+            <i class="fas fa-trash-alt"></i>
+          </button>
+        </form>
+    </td>
       `;
       ordersTable.appendChild(row);
     });
@@ -328,14 +336,20 @@ function fetchCustomerDetails(customerId) {
       row.innerHTML = `
         <td>${formatDate(meeting.date)}</td>
         <td>${meeting.title}</td>
-        <td class="action-cell">
-          <button class="btn small primary view-meeting" data-id="${meeting.id}">View</button>
-          <button class="btn small secondary edit-meeting" data-id="${meeting.id}">Edit</button>
-          <form action="/delete_meeting" method="POST" id="deleteMeetingForm" onsubmit="return confirmDelete(event)">
-            <input type="hidden" value="${meeting.id}" name="meeting_id">
-            <button class="btn small danger delete-meeting" type="submit">Delete</button>
-          </form>
-        </td>
+    <td class="action-cell">
+      <button class="btn small primary view-meeting" data-id="${meeting.id}" title="View">
+        <i class="fas fa-eye"></i>
+      </button>
+      <button class="btn small secondary edit-meeting" data-id="${meeting.id}" title="Edit">
+        <i class="fas fa-edit"></i>
+      </button>
+      <form action="/delete_meeting" method="POST" id="deleteMeetingForm" onsubmit="return confirmDelete(event)">
+        <input type="hidden" value="${meeting.id}" name="meeting_id">
+        <button class="btn small danger delete-meeting" type="submit" title="Delete">
+          <i class="fas fa-trash-alt"></i>
+        </button>
+      </form>
+    </td>
       `;
       meetingsTable.appendChild(row);
     });
@@ -350,14 +364,20 @@ function fetchCustomerDetails(customerId) {
         row.innerHTML = `
           <td>${formatDate(update.date)}</td>
           <td>${update.title}</td>
-          <td class="action-cell">
-            <button class="btn small primary view-update" data-id="${update.id}">View</button>
-            <button class="btn small secondary edit-update" data-id="${update.id}">Edit</button>
-          <form action="/delete_update" method="POST" id="deleteUpdateForm" onsubmit="return confirmDelete(event)">
-            <input type="hidden" value="${update.id}" name="update_id">
-            <button class="btn small danger delete-update" type="submit">Delete</button>
-          </form>
-          </td>
+    <td class="action-cell">
+      <button class="btn small primary view-update" data-id="${update.id}" title="View">
+        <i class="fas fa-eye"></i>
+      </button>
+      <button class="btn small secondary edit-update" data-id="${update.id}" title="Edit">
+        <i class="fas fa-edit"></i>
+      </button>
+      <form action="/delete_update" method="POST" id="deleteUpdateForm" onsubmit="return confirmDelete(event)">
+        <input type="hidden" value="${update.id}" name="update_id">
+        <button class="btn small danger delete-update" type="submit" title="Delete">
+          <i class="fas fa-trash-alt"></i>
+        </button>
+      </form>
+    </td>
         `;
         updatesTable.appendChild(row);
       });
@@ -656,49 +676,25 @@ function closeOrderModal() {
     modal.style.display = 'none';
 }
 
-document.getElementById("addMeetingForm").addEventListener("submit", function(event) {
-  event.preventDefault(); // Prevent default form submission
-
-  // Get the form data
-  const form = event.target;
-  const formData = new FormData(form);
-
-  // Send the data via Fetch API
-  fetch(form.action, {
-    method: form.method,
-    body: formData
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      alert("Meeting added successfully!");
-      
-      // Refresh the customer details page
-      fetchCustomerDetails(data.customer_id);
-      
-      // Close the modal
-      closeMeetingModal();
-    } else {
-      alert("Failed to add meeting.");
-    }
-  })
-  .catch(error => {
-    console.error("Error:", error);
-    alert("An error occurred while adding the meeting.");
-  });
-});
-
-function closeMeetingModal() {
-  const modal = document.getElementById("addMeetingModal");
-    modal.style.display = 'none';
-}
 
 document.getElementById("addUpdateForm").addEventListener("submit", function(event) {
-  event.preventDefault(); // Prevent default form submission
+  event.preventDefault();
 
-  // Get the form data
   const form = event.target;
   const formData = new FormData(form);
+
+  // Collect action items
+  let actionItems = [];
+  document.querySelectorAll("#action-items-container .action-item").forEach(item => {
+    actionItems.push({
+      item: item.querySelector('input[name="action_item"]').value,
+      responsible: item.querySelector('input[name="responsible"]').value,
+      due_date: item.querySelector('input[name="due_date"]').value,
+      status: item.querySelector('select[name="status"]').value
+    });
+  });
+
+  formData.append("action_items", JSON.stringify(actionItems));
 
   // Send the data via Fetch API
   fetch(form.action, {
@@ -709,23 +705,19 @@ document.getElementById("addUpdateForm").addEventListener("submit", function(eve
   .then(data => {
     if (data.success) {
       alert("Update added successfully!");
-      
-      // Refresh the customer details page
       fetchCustomerDetails(data.customer_id);
-      
-      // Close the modal
-      closeModal();
+      closeUpdateModal();
     } else {
-      alert("Failed to add update.");
+      alert("Failed to add meeting.");
     }
   })
   .catch(error => {
     console.error("Error:", error);
-    alert("An error occurred while adding the update.");
+    alert("An error occurred while adding the Update.");
   });
 });
 
-function closeModal() {
+function closeUpdateModal() {
   const modal = document.getElementById("addUpdateModal");
     modal.style.display = 'none';
 }
@@ -766,7 +758,102 @@ document.getElementById("updateCustomerDetails").addEventListener("submit", func
   });
 });
 
+document.querySelector(".cancel-btn").addEventListener("click", function(event) {
+  event.preventDefault(); // Prevent any default behavior like form submission
 
+  // Switch back to view mode
+  document.querySelector(".edit-mode").classList.remove("edit-mode"); // Example: Hide edit mode
+  document.querySelector(".view-mode").classList.add("view-mode"); // Example: Show view mode
+});
+
+document.querySelectorAll(".add-action-item").forEach(button => {
+  button.addEventListener("click", function() {
+      // Identify the correct container based on the clicked button
+      const container = this.closest(".modal-body").querySelector(".action-items-container");
+
+      const div = document.createElement("div");
+      div.classList.add("action-item");
+
+      div.innerHTML = `
+          <div class="form-group">
+              <label>Item:</label>
+              <input type="text" name="action_item" required>
+          </div>
+          <div class="form-group">
+              <label>Responsible:</label>
+              <input type="text" name="responsible" required>
+          </div>
+          <div class="form-group">
+              <label>Due Date:</label>
+              <input type="date" name="due_date" required>
+          </div>
+          <div class="form-group">
+              <label>Status:</label>
+              <select name="status" required>
+                  <option value="Not Started">Not Started</option>
+                  <option value="Pending">Pending</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Completed">Completed</option>
+              </select>
+          </div>
+          <button type="button" class="remove-action-item btn danger">Remove</button>
+      `;
+
+      container.appendChild(div);
+
+      // Add event listener for removing action items
+      div.querySelector(".remove-action-item").addEventListener("click", function() {
+          div.remove();
+      });
+  });
+});
+
+  document.getElementById("addMeetingForm").addEventListener("submit", function(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const formData = new FormData(form);
+
+    // Collect action items
+    let actionItems = [];
+    document.querySelectorAll("#action-items-container .action-item").forEach(item => {
+      actionItems.push({
+        item: item.querySelector('input[name="action_item"]').value,
+        responsible: item.querySelector('input[name="responsible"]').value,
+        due_date: item.querySelector('input[name="due_date"]').value,
+        status: item.querySelector('select[name="status"]').value
+      });
+    });
+
+    formData.append("action_items", JSON.stringify(actionItems));
+
+    // Send the data via Fetch API
+    fetch(form.action, {
+      method: form.method,
+      body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert("Meeting added successfully!");
+        fetchCustomerDetails(data.customer_id);
+        closeMeetingModal();
+      } else {
+        alert("Failed to add meeting.");
+      }
+    })
+    .catch(error => {
+      console.error("Error:", error);
+      alert("An error occurred while adding the meeting.");
+    });
+  });
+
+  function closeMeetingModal() {
+    const modal = document.getElementById("addMeetingModal");
+      modal.style.display = 'none';
+  }
+  
+  
 function addKeyframeAnimations() {
   if (!document.getElementById('custom-animations')) {
     const styleSheet = document.createElement('style');
@@ -820,147 +907,6 @@ function attachEditContactListeners() {
   });
 }
 
-
-// function attachViewOrderListeners() {
-//   document.querySelectorAll(".view-order-btn").forEach(button => {
-//       button.addEventListener("click", function() {
-//           // Extract contact details from the button's data attributes
-//           const orderId = this.getAttribute("data-id");
-//           const orderDate = this.getAttribute("data-orderDate");
-//           const orderNo = this.getAttribute("data-orderNo");
-//           const orderMaterial = this.getAttribute("data-material");
-//           const orderAmount = this.getAttribute("data-amount");
-//           const orderGoal = this.getAttribute("data-goal");
-//           const orderNotes = this.getAttribute("data-notes");
-
-//           // Populate the modal fields
-//           document.getElementById("orderNo").value = orderNo;
-//           document.getElementById("orderDate").value = orderDate;
-//           document.getElementById("orderMaterial").value = orderMaterial;
-//           document.getElementById("orderAmount").value = orderAmount;
-//           document.getElementById("orderGoal").value = orderGoal;
-//           document.getElementById("orderNotes").value = orderNotes;
-
-//           // Show the modal
-//           document.getElementById("orderViewModal").style.display = "block";
-//       });
-//   });
-// }
-
-// attachViewOrderListeners();
-
-const addActionItemBtn = document.getElementById('add-action-item-btn');
-const actionItemsList = document.getElementById('action-items-list');
-
-// Function to create and add a new action item form
-function addActionItem() {
-    const actionItemDiv = document.createElement('div');
-    actionItemDiv.classList.add('action-item');
-
-    actionItemDiv.innerHTML = `
-        <div class="info-item">
-            <label for="action-item">Action Item:</label>
-            <input type="text" name="action_item" required>
-        </div>
-        <div class="info-item">
-            <label for="responsible">Responsible:</label>
-            <input type="text" name="responsible" required>
-        </div>
-        <div class="info-item">
-            <label for="due-date">Due Date:</label>
-            <input type="date" name="due_date" required>
-        </div>
-        <div class="info-item">
-            <label for="status">Status:</label>
-            <select name="status" required>
-                <option value="Pending">Not Started</option>
-                <option value="Pending">Pending</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
-            </select>
-        </div>
-        <button type="button" class="remove-action-item-btn">Remove</button>
-    `;
-    
-    // Add the new action item to the list
-    actionItemsList.appendChild(actionItemDiv);
-
-   // Add event listener to remove the action item
-   const removeBtn = actionItemDiv.querySelector('.remove-action-item-btn');
-   removeBtn.addEventListener('click', () => {
-       actionItemsList.removeChild(actionItemDiv);
-   });
-}
-
-// Event listener for the "Add Action Item" button
-if (addActionItemBtn) {
-addActionItemBtn.addEventListener('click', addActionItem);
-}
-
-const actionItems = [];
-
-// Loop through each action item and collect its data
-document.querySelectorAll('.action-item').forEach(item => {
-    const actionItem = item.querySelector('input[name="action_item"]').value;
-    const responsible = item.querySelector('input[name="responsible"]').value;
-    const dueDate = item.querySelector('input[name="due_date"]').value;
-    const status = item.querySelector('select[name="status"]').value;
-    const customer = document.getElementById("company").value;
-
-    actionItems.push({ customer:customer, item: actionItem, responsible: responsible, due_date: dueDate, status: status});
-});
-
-// Add the action items to the form as a hidden input
-const actionItemsInput = document.createElement('input');
-actionItemsInput.type = 'hidden';
-actionItemsInput.name = 'action_items';
-actionItemsInput.value = JSON.stringify(actionItems); // Convert to JSON string
-document.querySelector('#addMeetingForm').appendChild(actionItemsInput);
-document.querySelector('#addUpdateForm').appendChild(actionItemsInput);
-
-
-// document.addEventListener('DOMContentLoaded', function() {
-// // Get all "Add Action Item" buttons
-// const addActionButtons = document.querySelectorAll('#add-action-item-btn');
-
-// // Loop over each button and attach the event listener
-// addActionButtons.forEach(function(button) {
-//     button.addEventListener('click', function() {
-//         // Get the table body where action items will be added
-//         const tableBody = button.closest('.edit-meeting-form').querySelector('#action-items-table');
-//           // Create a new row
-//           const newRow = document.createElement('tr');
-//           newRow.classList.add('action-item-row');
-          
-//           // Add input fields to the new row
-//           newRow.innerHTML = `
-//               <td><input type="text" name="action_item" required></td>
-//               <td><input type="text" name="responsible" required></td>
-//               <td><input type="date" name="due_date" required></td>
-//               <td>
-//                   <select name="status" required>
-//                         <option value="Pending">Not Started</option>
-//                       <option value="Pending">Pending</option>
-//                       <option value="In Progress">In Progress</option>
-//                       <option value="Completed">Completed</option>
-//                   </select>
-//               </td>
-//               <td>
-//                   <button type="button" class="remove-action-item-btn" onclick="removeActionItem(this)">Remove</button>
-//               </td>
-//           ;`
-
-//           // Append the new row to the table body
-//           tableBody.appendChild(newRow);
-//       });
-//   });
-// });
-
-function removeActionItem(button) {
-  // Remove the row of the clicked "Remove" button
-  const row = button.closest('tr');
-  row.remove();
-}
 
 
 function initApp() {
