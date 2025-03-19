@@ -116,7 +116,7 @@ def login():
         # יצירת URL להפניה ל-Microsoft עם redirect_uri תקין
         auth_url = msal_app.get_authorization_request_url(
             SCOPES,
-            redirect_uri=url_for('auth_callback', _external=True,  _scheme='https'),  # הכוונה היא לחזור ל-/auth/callback
+            redirect_uri=url_for('auth_callback', _external=True,  _scheme='http'),  # הכוונה היא לחזור ל-/auth/callback
             state=company_name  # שמירת שם החברה כ-state
         )
         return redirect(auth_url)
@@ -148,7 +148,7 @@ def auth_callback():
         result = msal_app.acquire_token_by_authorization_code(
             request.args['code'],
             scopes=SCOPES,
-            redirect_uri=url_for('auth_callback', _external=True, _scheme='https')
+            redirect_uri=url_for('auth_callback', _external=True, _scheme='http')
         )
         access_token = result.get('access_token')
         if "refresh_token" in result:
@@ -276,6 +276,8 @@ def get_customer(customer_id):
         "status": customer[0][5],
         "startDate": customer[0][7],
         "ndaFile": customer[0][8],
+        "lead": customer[0][4],
+        "salesRep": customer[0][6]
     }
 
     technical_info = {
@@ -586,9 +588,9 @@ def update_customer_details():
     name = request.form.get('companyName').title()
     country = request.form.get('country').title()
     address = request.form.get('address')
-    # lead = request.form.get('lead').title()
+    lead = request.form.get('lead').title()
     status = request.form.get('status')
-    # sales_rep = request.form.get('sales_rep').title()
+    sales_rep = request.form.get('sales_rep').title()
     start_date = request.form.get('startDate')
     NDA_file = request.files.get('ndaFile')
 
@@ -614,9 +616,9 @@ def update_customer_details():
     # Update customer details
     query("""
         UPDATE customers
-        SET Name = ?, Country = ?, Address = ?, Status = ?, start_date = ?, NDA_file = ?
+        SET Name = ?, Country = ?, Address = ?, Status = ?, start_date = ?, NDA_file = ?, lead = ?, sales_rep = ?
         WHERE id = ?
-    """, (name, country, address, status, start_date, current_file_data, customer_id))
+    """, (name, country, address, status, start_date, current_file_data, lead, sales_rep, customer_id))
 
     
     line = request.form.get('line').upper()
