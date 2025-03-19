@@ -116,7 +116,7 @@ def login():
         # יצירת URL להפניה ל-Microsoft עם redirect_uri תקין
         auth_url = msal_app.get_authorization_request_url(
             SCOPES,
-            redirect_uri=url_for('auth_callback', _external=True,  _scheme='http'),  # הכוונה היא לחזור ל-/auth/callback
+            redirect_uri=url_for('auth_callback', _external=True,  _scheme='https'),  # הכוונה היא לחזור ל-/auth/callback
             state=company_name  # שמירת שם החברה כ-state
         )
         return redirect(auth_url)
@@ -148,7 +148,7 @@ def auth_callback():
         result = msal_app.acquire_token_by_authorization_code(
             request.args['code'],
             scopes=SCOPES,
-            redirect_uri=url_for('auth_callback', _external=True, _scheme='http')
+            redirect_uri=url_for('auth_callback', _external=True, _scheme='https')
         )
         access_token = result.get('access_token')
         if "refresh_token" in result:
