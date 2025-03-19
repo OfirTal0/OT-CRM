@@ -116,7 +116,7 @@
                             ">{{ action_item[5] }}</span>
                         </td>
                         <td>
-                          <form method="GET" action="{{ url_for('customer_choosen') }}" class="go-to-action-item-form">
+                          <form method="GET" class="go-to-action-item-form">
                             <input type="hidden" name="customer_name" value="{{ action_item[1] }}">
                             <input type="hidden" name="category_id" value="{{ action_item[7] }}"> 
                             <input type="hidden" name="item_category" value="{{ action_item[6] }}">
@@ -333,7 +333,6 @@
                       <th>Order No</th>
                       <th>Material</th>
                       <th>Amount</th>
-                      <th>Description</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -593,6 +592,47 @@
           </div>
         </div>
 
+        <div id="viewOrderModal" class="modal">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h2>Order Details</h2>
+              <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+              <div class="info-grid">
+                <div class="form-group">
+                  <p><strong>Material:</strong> <span id="viewOrderMaterial"></span></p>
+                </div>
+                <div class="form-group">
+                  <p><strong>Date:</strong> <span id="viewOrderDate"></span></p>
+                </div>
+                <div class="form-group">
+                  <p><strong>Order No:</strong> <span id="viewOrderNo"></span></p>
+                </div>
+                <div class="form-group">
+                  <p><strong>Amount:</strong> <span id="viewOrderAmount"></span></p>
+                </div>
+                <div class="form-group">
+                  <p><strong>Goal:</strong> <span id="viewOrderGoal"></span></p>
+                </div>
+                <div class="form-group">
+                  <p><strong>Notes:</strong> <span id="viewOrderNotes"></span></p>
+                </div>
+
+                <div class="form-group">
+                  <p><strong>Order File: </strong><a id="viewOrderFileLink" target="_blank">Download</a></p>
+                </div>
+                <div class="form-group">
+                  <p><strong>Invoice File: </strong><a id="viewinvoiceFileLink" target="_blank">Download</a></p> 
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+
+
         <div id="addMeetingModal" class="modal">
           <div class="modal-content">
             <div class="modal-header">
@@ -616,11 +656,12 @@
                     <label for="date">Date:</label>
                     <input type="date" id="meeting-date" name="date" required>
                   </div>
+                </div>
+
                   <div  class="form-group">
                     <label for="summary">Summary:</label>
                     <textarea id="meeting-summary" name="summary" required></textarea>
                   </div>
-              </div>
               <div style="display:flex; justify-content:space-between;">
                 <h3>Action Items</h3>
                 <button type="button" class="btn secondary add-action-item">Add Action Item</button>
@@ -637,6 +678,38 @@
           </div>
         </div>
 
+        <div id="viewMeetingModal" class="modal">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h2>Meeting Details</h2>
+              <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+              <div class="info-grid">
+                <div class="form-group">
+                  <p><strong>Title:</strong> <span id="viewMeetingTitle"></span></p>
+                </div>
+                <div class="form-group">
+                  <p><strong>Attendees:</strong> <span id="viewMeetingAttendees"></span></p>
+                </div>
+                <div class="form-group">
+                  <p><strong>Date:</strong> <span id="viewMeetingDate"></span></p>
+                </div>
+              </div>
+
+                <div class="form-group">
+                  <p><strong>Summary:</strong><textarea id="viewMeetingSummary" readonly></textarea>
+                  </p>
+                </div>
+                <div class="form-group">
+                  <p><strong>Action Items:</strong></p>
+                  <ul id="viewMeetingActions"></ul>  <!-- Action items list -->
+                </div>
+            </div>
+          </div>
+        </div>
+
+
         <div id="addUpdateModal" class="modal">
           <div class="modal-content">
             <div class="modal-header">
@@ -650,16 +723,19 @@
                 <div class="info-grid">
                   <div  class="form-group">
                     <label for="title">Title</label>
-                    <textarea id="title" name="title" rows="4" required></textarea>
-                  </div>
-                  <div  class="form-group">
-                    <label for="update">Update:</label>
-                    <textarea id="update" name="update" rows="4" required></textarea>
+                    <input id="title" name="title" rows="4" required>
                   </div>
                   <div  class="form-group">
                     <label for="date">Date:</label>
                     <input type="date" id="date" name="date" required>
                   </div>
+                </div>
+
+                  <div  class="form-group">
+                    <label for="update">Update:</label>
+                    <textarea id="update" name="update" rows="4" required></textarea>
+                  </div>
+
                   <div  class="form-group">
                     <label for="next_step">Next Step:</label>
                     <input type="text" id="next_step" name="next_step">
@@ -668,8 +744,7 @@
                     <label for="file">Attach File:</label>
                     <input type="file" id="file" name="file" accept=".pdf,.doc,.docx,.xls,.xlsx">
                   </div>
-              </div>
-              <div style="display:flex; justify-content:space-between;">
+              <div class="add-action-style" ">
                 <h3>Action Items</h3>
                 <button type="button" class="btn secondary add-action-item">Add Action Item</button>
               </div>
@@ -680,6 +755,37 @@
                   <button type="button" class="btn secondary cancel-modal">Cancel</button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+
+        <div id="viewUpdateModal" class="modal">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h2>Update Details</h2>
+              <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+              <div class="info-grid">
+                <div class="form-group">
+                  <p><strong>Title:</strong> <span id="viewUpdateTitle"></span></p>
+                </div>
+                <div class="form-group">
+                  <p><strong>Date:</strong> <span id="viewUpdateDate"></span></p>
+                </div>
+              </div>
+              <div class="form-group">
+                <p><strong>Update:</strong> <textarea id="viewUpdateUpdate" readonly></textarea></p>
+              </div>
+                <div class="form-group">
+                  <p><strong>Next Step:</strong> <span id="viewUpdateNextStep"></span></p>
+                </div>
+                <div class="form-group">
+                  <p><strong>Update File: </strong><a id="viewUpdateFileLink" target="_blank">Download</a></p>
+                </div>
+                <div class="form-group">
+                  <p><strong>Action Items:</strong> <span id="viewUpdateActions"></span></p>
+                </div>
             </div>
           </div>
         </div>
@@ -714,41 +820,7 @@
         </div>
         </div>
 
-        <div id="orderViewModal" class="modal">
-          <div class="modal-content">
-            <span class="close" onclick="closeModal('orderViewModal')">&times;</span>
-            <h2>Order Details</h2>
-            <p><strong>Order No:</strong> <span id="orderNo"></span></p>
-            <p><strong>Date:</strong> <span id="orderDate"></span></p>
-            <p><strong>Material:</strong> <span id="orderMaterial"></span></p>
-            <p><strong>Amount:</strong> <span id="orderAmount"></span></p>
-            <p><strong>Goal:</strong> <span id="orderGoal"></span></p>
-            <p><strong>Notes:</strong> <span id="orderNotes"></span></p>
-          </div>
-        </div>
-        
-        <!-- Meeting View Modal -->
-        <div id="meetingViewModal" class="modal">
-          <div class="modal-content">
-            <span class="close" onclick="closeModal('meetingViewModal')">&times;</span>
-            <h2>Meeting Details</h2>
-            <p><strong>Title:</strong> <span id="meetingTitle"></span></p>
-            <p><strong>Date:</strong> <span id="meetingDate"></span></p>
-            <p><strong>Description:</strong> <span id="meetingDescription"></span></p>
-          </div>
-        </div>
-        
-        <!-- Update View Modal -->
-        <div id="updateViewModal" class="modal">
-          <div class="modal-content">
-            <span class="close" onclick="closeModal('updateViewModal')">&times;</span>
-            <h2>Update Details</h2>
-            <p><strong>Title:</strong> <span id="updateTitle"></span></p>
-            <p><strong>Date:</strong> <span id="updateDate"></span></p>
-            <p><strong>Description:</strong> <span id="updateDescription"></span></p>
-          </div>
-        </div>
-
+           
 
         
 

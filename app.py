@@ -15,7 +15,7 @@ import requests
 
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static', 'uploads')
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Get the directory where app.py is located
@@ -186,25 +186,7 @@ def auth_callback():
     else:
         return "Authentication failed", 400
 
-@app.route('/dashboard')
-def dashboard():
-    if 'valid_user' not in session:
-        flash("Please log in first", "warning")
-        return redirect(url_for('login'))
 
-    company_name = session['company_name']
-    company_slogan = session['company_slogan']
-    
-    customers = query("SELECT * FROM customers WHERE OT_company = ? ORDER BY name ASC", (company_name,))
-    action_items = query("SELECT * FROM action_items WHERE OT_company = ?", (company_name,))
-    contacts_display = query("SELECT * FROM contacts WHERE OT_company = ?", (company_name,))
-    
-    return render_template('dashboard.html',
-                           company_name=company_name,
-                           company_slogan=company_slogan,
-                           customers=customers,
-                           action_items=action_items,
-                           contacts_display=contacts_display)
 
 
 @app.route('/logout')
@@ -225,7 +207,7 @@ def index():
     customers = query("SELECT * FROM customers WHERE OT_company = ? ORDER BY name ASC", (company_name,))
     action_items = query("SELECT * FROM action_items WHERE OT_company = ?", (company_name,))
     contacts_display = query("SELECT * FROM contacts WHERE OT_company = ?", (company_name,))
-    
+        
     return render_template('index.html',
                            current_time=datetime.now(),
                            company_name=company_name,
@@ -252,75 +234,6 @@ def get_contacts():
     ]
     return jsonify(contacts)
 
-
-
-@app.route('/customer_choosen', methods=['POST', 'GET'])
-def customer_choosen():
-    company_name = session.get('company_name', '')
-    company_slogan = session.get('company_slogan', '')
-    customer_id = request.form.get('customer_id') or request.args.get('customer_id')
-    customer_name = request.form.get('customer_name') or request.args.get('customer_name')
-    item_category =request.form.get('item_category')or request.args.get('item_category')
-    category_id = request.form.get('category_id')  or request.args.get('category_id')
-
-    # If customer_name is provided, query for customer_id
-    if not customer_id and customer_name:
-        customer_id_query = "SELECT id FROM customers WHERE name = ?"
-        customer_id_result = query(customer_id_query, (customer_name,))
-        if not customer_id_result:
-            return "Customer not found", 404
-        customer_id = customer_id_result[0][0]  # Assuming the result is [(id,)]
-
-    if not customer_id:
-        return "Customer not found", 404
-
-    # Fetch customer details
-    customer_query = "SELECT * FROM customers WHERE id = ?"
-    customer = query(customer_query, (customer_id,))
-    if not customer:
-        return "Customer not found", 404
-
-    # Fetch related data
-    contacts_query = "SELECT * FROM contacts WHERE company = ?"
-    contacts = query(contacts_query, (customer[0][1],))
-
-    meetings_query = "SELECT * FROM meetings WHERE company = ? ORDER BY date DESC"
-    meetings = query(meetings_query, (customer[0][1],))
-
-    updates_query = "SELECT * FROM updates WHERE company = ? ORDER BY date DESC"
-    updates = query(updates_query, (customer[0][1],))
-
-    technical_query = "SELECT * FROM technical WHERE company = ?"
-    technical = query(technical_query, (customer[0][1],))
-
-    commercial_query = "SELECT * FROM commercial WHERE company = ?"
-    commercial = query(commercial_query, (customer[0][1],))
-
-    orders_query = "SELECT * FROM orders WHERE company = ? ORDER BY date DESC"
-    orders = query(orders_query, (customer[0][1],))
-
-    action_items_query = "SELECT * FROM action_items WHERE customer = ?"
-    action_items = query(action_items_query, (customer[0][1],))
-
-
-    # Redirect with anchor to #meeting section
-    return render_template(
-        'dashboard.html',
-        customers=query("SELECT * FROM customers ORDER BY name ASC"), 
-        company_name=company_name,
-        company_slogan=company_slogan,
-        selected_customer=customer[0],
-        contacts=contacts,
-        updates=updates,
-        technical=technical,
-        commercial=commercial,
-        orders=orders,
-        meetings=meetings,
-        category_id=category_id,
-        item_category= item_category,
-        action_items=action_items  # Passing action items to the template
-
-    )
 
     
 @app.route("/get_customer/<int:customer_id>")
@@ -380,7 +293,7 @@ def get_customer(customer_id):
     }
 
     action_items_list = [
-        {"item": action_item[2], "responsible": action_item[3], "dueDate": action_item[4], "status": action_item[5], "category": action_item[6]}
+        {"item": action_item[2], "responsible": action_item[3], "dueDate": action_item[4], "status": action_item[5], "category": action_item[6], "OT_company" : action_item[7]}
         for action_item in action_items
     ]
 
@@ -390,7 +303,7 @@ def get_customer(customer_id):
     ]
 
     meetings_list = [
-        {"id": meeting[0], "title": meeting[2], "date": meeting[3], "attendees": meeting[4], "summary": meeting[5]}
+        {"id": meeting[0], "comapny": meeting[1], "title": meeting[2], "date": meeting[3], "attendees": meeting[4], "summary": meeting[5]}
         for meeting in meetings
     ]
 
@@ -400,9 +313,10 @@ def get_customer(customer_id):
     ]
 
     orders_list = [
-        {"id": order[0], "material": order[2], "amount": order[3], "goal": order[4], "notes": order[5], "date": order[6], "orderNo": order[7]}
+        {"id": order[0], "material": order[2], "amount": order[3], "goal": order[4], "notes": order[5], "date": order[6], "orderNo": order[7], "orderFile": order[8], "invoiceFile": order[9]}
         for order in orders
     ]
+
 
     # Return the data as JSON
     return jsonify({
@@ -415,6 +329,7 @@ def get_customer(customer_id):
         "orders": orders_list,
         "actionItems": action_items_list
     })
+
 
 
 
@@ -574,76 +489,76 @@ def add_order():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@app.route('/edit_update', methods=['POST'])
-def edit_update():
-    update_id = request.form.get('update_id')
-    content = request.form.get('content').capitalize()
-    title = request.form.get('title').title()
-    next_step = request.form.get('next_step').capitalize()
-    responsible = request.form.get('responsible').capitalize()
-    date = request.form.get('date')
-    file = request.files.get('file')
+# @app.route('/edit_update', methods=['POST'])
+# def edit_update():
+#     update_id = request.form.get('update_id')
+#     content = request.form.get('content').capitalize()
+#     title = request.form.get('title').title()
+#     next_step = request.form.get('next_step').capitalize()
+#     responsible = request.form.get('responsible').capitalize()
+#     date = request.form.get('date')
+#     file = request.files.get('file')
 
-    current_file = query(f"SELECT file FROM updates WHERE id = {update_id} ")
-    file_data = current_file[0][0]
-    if file:
-        file_name = secure_filename(f"update_{update_id}_{file.filename}")
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
-        file.save(file_path)
-        file_data = file_name
+#     current_file = query(f"SELECT file FROM updates WHERE id = {update_id} ")
+#     file_data = current_file[0][0]
+#     if file:
+#         file_name = secure_filename(f"update_{update_id}_{file.filename}")
+#         file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
+#         file.save(file_path)
+#         file_data = file_name
 
-    update_query = """
-    UPDATE updates
-    SET content = ?, next_step = ?, responsible = ?, date = ?, file = ?, title = ?
-    WHERE id = ?
-    """
-    query(update_query, (content, next_step, responsible, date, file_data, title, update_id))
+#     update_query = """
+#     UPDATE updates
+#     SET content = ?, next_step = ?, responsible = ?, date = ?, file = ?, title = ?
+#     WHERE id = ?
+#     """
+#     query(update_query, (content, next_step, responsible, date, file_data, title, update_id))
 
-    flash("Update edited successfully.")
-    return redirect(f'/customer_choosen?customer_id={request.form.get("customer_id")}')
+#     flash("Update edited successfully.")
+#     return redirect(f'/customer_choosen?customer_id={request.form.get("customer_id")}')
 
-@app.route('/edit_order', methods=['POST'])
-def edit_order():
-    order_id = request.form.get('order_id')
-    material = request.form.get('material').upper()
-    amount = request.form.get('amount')
-    goal = request.form.get('goal').capitalize()
-    order_no = request.form.get('order_no')
-    notes = request.form.get('notes').capitalize()
-    date = request.form.get('date')
-    order_file = request.files.get('order_file')
-    invoice_file = request.files.get('invoice_file')
+# @app.route('/edit_order', methods=['POST'])
+# def edit_order():
+#     order_id = request.form.get('order_id')
+#     material = request.form.get('material').upper()
+#     amount = request.form.get('amount')
+#     goal = request.form.get('goal').capitalize()
+#     order_no = request.form.get('order_no')
+#     notes = request.form.get('notes').capitalize()
+#     date = request.form.get('date')
+#     order_file = request.files.get('order_file')
+#     invoice_file = request.files.get('invoice_file')
 
-    # Get the current file content (BLOB) from the database (if applicable)
-    current_order_file = query(f"SELECT order_file FROM orders WHERE id = {order_id} ")
-    current_invoice_file = query(f"SELECT invoice_file FROM orders WHERE id = {order_id} ")
+#     # Get the current file content (BLOB) from the database (if applicable)
+#     current_order_file = query(f"SELECT order_file FROM orders WHERE id = {order_id} ")
+#     current_invoice_file = query(f"SELECT invoice_file FROM orders WHERE id = {order_id} ")
 
-    order_file_data = current_order_file[0][0]  # Existing file data or None if no file exists
-    if order_file:
-        # If a new order file is uploaded, save it and update the file data
-        order_file_name = secure_filename(f"order_{order_id}_{order_file.filename}")
-        order_file_path = os.path.join(app.config['UPLOAD_FOLDER'], order_file_name)
-        order_file.save(order_file_path)
-        order_file_data = order_file_name  # Set the file name for the new file
+#     order_file_data = current_order_file[0][0]  # Existing file data or None if no file exists
+#     if order_file:
+#         # If a new order file is uploaded, save it and update the file data
+#         order_file_name = secure_filename(f"order_{order_id}_{order_file.filename}")
+#         order_file_path = os.path.join(app.config['UPLOAD_FOLDER'], order_file_name)
+#         order_file.save(order_file_path)
+#         order_file_data = order_file_name  # Set the file name for the new file
 
-    invoice_file_data = current_invoice_file[0][0]  # Existing invoice file data or None if no file exists
-    if invoice_file:
-        # If a new invoice file is uploaded, save it and update the file data
-        invoice_file_name = secure_filename(f"invoice_{order_id}_{invoice_file.filename}")
-        invoice_file_path = os.path.join(app.config['UPLOAD_FOLDER'], invoice_file_name)
-        invoice_file.save(invoice_file_path)
-        invoice_file_data = invoice_file_name  # Set the file name for the new file
+#     invoice_file_data = current_invoice_file[0][0]  # Existing invoice file data or None if no file exists
+#     if invoice_file:
+#         # If a new invoice file is uploaded, save it and update the file data
+#         invoice_file_name = secure_filename(f"invoice_{order_id}_{invoice_file.filename}")
+#         invoice_file_path = os.path.join(app.config['UPLOAD_FOLDER'], invoice_file_name)
+#         invoice_file.save(invoice_file_path)
+#         invoice_file_data = invoice_file_name  # Set the file name for the new file
 
-    # Update the database with the new data or keep the old data if no new file is uploaded
-    order_query = """
-    UPDATE orders
-    SET material = ?, amount = ?, goal = ?, notes = ?, date = ?, order_no = ?, order_file = ?, invoice_file = ?
-    WHERE id = ?
-    """
-    query(order_query, (material, amount, goal, notes, date, order_no, order_file_data, invoice_file_data, order_id))
+#     # Update the database with the new data or keep the old data if no new file is uploaded
+#     order_query = """
+#     UPDATE orders
+#     SET material = ?, amount = ?, goal = ?, notes = ?, date = ?, order_no = ?, order_file = ?, invoice_file = ?
+#     WHERE id = ?
+#     """
+#     query(order_query, (material, amount, goal, notes, date, order_no, order_file_data, invoice_file_data, order_id))
 
-    flash("Order edited successfully.")
-    return redirect(f'/customer_choosen?customer_id={request.form.get("customer_id")}')
+#     flash("Order edited successfully.")
+#     return redirect(f'/customer_choosen?customer_id={request.form.get("customer_id")}')
 
 @app.route('/delete_customer', methods=['POST'])
 def delete_customer():
@@ -853,11 +768,6 @@ def add_action_items(action_items,item_category, meeting_id, customer_name):
             OT_company
         ))
 
-@app.route('/delete_action_item/<int:action_item_id>', methods=['POST'])
-def delete_action_item(action_item_id):
-    delete_query = "DELETE FROM action_items WHERE id = ?"
-    query(delete_query, (action_item_id,))
-    return redirect(url_for('dashboard'))
 
 
 @app.route('/delete_meeting', methods=['POST'])
@@ -936,53 +846,53 @@ def edit_contact():
         return jsonify({"success": False, "error": str(e)}), 500  # Return JSON error
 
 
-@app.route('/edit_meeting', methods=['POST'])
-def edit_meeting():
-    meeting_id = request.form.get('meeting_id')
-    title = request.form.get('title').title()
-    date = request.form.get('date')
-    attendees = request.form.get('attendees')
-    summary = request.form.get('summary').capitalize()
-    customer_id = request.form.get('customer_id')
+# @app.route('/edit_meeting', methods=['POST'])
+# def edit_meeting():
+#     meeting_id = request.form.get('meeting_id')
+#     title = request.form.get('title').title()
+#     date = request.form.get('date')
+#     attendees = request.form.get('attendees')
+#     summary = request.form.get('summary').capitalize()
+#     customer_id = request.form.get('customer_id')
 
-    # Update the database
-    update_query = """
-    UPDATE meetings
-    SET title = ?, date = ?, attendees = ?, summary = ?
-    WHERE id = ?
-    """
-    query(update_query, (title, date, attendees, summary, meeting_id))
+#     # Update the database
+#     update_query = """
+#     UPDATE meetings
+#     SET title = ?, date = ?, attendees = ?, summary = ?
+#     WHERE id = ?
+#     """
+#     query(update_query, (title, date, attendees, summary, meeting_id))
 
-    flash("Meeting updated successfully.")
-    return redirect(f'/customer_choosen?customer_id={customer_id}')
+#     flash("Meeting updated successfully.")
+#     return redirect(f'/customer_choosen?customer_id={customer_id}')
 
 
-@app.route('/edit_action_items', methods=['POST'])
-def edit_action_items():
-    action_item_ids = request.form.getlist('action_item_id[]')
-    items = request.form.getlist('item[]')
-    responsibles = request.form.getlist('responsible[]')
-    due_dates = request.form.getlist('due_date[]')
-    statuses = request.form.getlist('status[]')
+# @app.route('/edit_action_items', methods=['POST'])
+# def edit_action_items():
+#     action_item_ids = request.form.getlist('action_item_id[]')
+#     items = request.form.getlist('item[]')
+#     responsibles = request.form.getlist('responsible[]')
+#     due_dates = request.form.getlist('due_date[]')
+#     statuses = request.form.getlist('status[]')
     
-    update_query = """
-    UPDATE action_items
-    SET item = ?, responsible = ?, due_date = ?, status = ?
-    WHERE id = ?
-    """
+#     update_query = """
+#     UPDATE action_items
+#     SET item = ?, responsible = ?, due_date = ?, status = ?
+#     WHERE id = ?
+#     """
     
-    # Loop through each action item and update it
-    for idx, action_item_id in enumerate(action_item_ids):
-        query(update_query, (
-            items[idx].capitalize(),
-            responsibles[idx].title(),
-            due_dates[idx],
-            statuses[idx],
-            action_item_id
-        ))
+#     # Loop through each action item and update it
+#     for idx, action_item_id in enumerate(action_item_ids):
+#         query(update_query, (
+#             items[idx].capitalize(),
+#             responsibles[idx].title(),
+#             due_dates[idx],
+#             statuses[idx],
+#             action_item_id
+#         ))
     
-    flash("Action items updated successfully.")
-    return redirect(url_for('dashboard'))
+#     flash("Action items updated successfully.")
+#     return redirect(url_for('dashboard'))
 
 
 # def generate_meeting_email(meeting_id):

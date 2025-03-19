@@ -14,6 +14,9 @@ const editContactBtn = document.getElementById('editContactBtn');
 const addOrdertBtn = document.getElementById('addOrderBtn');
 const addMeetingBtn = document.getElementById('addMeetingBtn');
 const addUpdateBtn = document.getElementById('addUpdateBtn');
+const viewOrderBtn = document.getElementById('view-order');
+const viewMeetingBtn = document.getElementById('view-meeting');
+const viewUpdateBtn = document.getElementById('view-update');
 
 
 function setupEventListeners() {
@@ -43,7 +46,25 @@ function setupEventListeners() {
     if (event.target && event.target.id === 'editContactBtn') {
       editContactModal.style.display = 'block';
     }
-    
+  });
+
+  
+  document.addEventListener('click', function(event) {
+    if (event.target && event.target.id === 'view-order') {
+      viewOrderModal.style.display = 'block';
+    }
+  });
+
+  document.addEventListener('click', function(event) {
+    if (event.target && event.target.id === 'view-meeting') {
+      viewMeetingModal.style.display = 'block';
+    }
+  });
+
+  document.addEventListener('click', function(event) {
+    if (event.target && event.target.id === 'view-update') {
+      viewUpdateModal.style.display = 'block';
+    }
   });
 }
 
@@ -239,6 +260,10 @@ function fetchCustomerDetails(customerId) {
       setCustomerId(customerId);
       selectCustomer() 
 
+    const sidebar = document.getElementById("sidebar");
+    sidebar.classList.remove("open");
+
+
       // Extract data
       const { customerInfo, contacts, meetings, updates, technicalInfo, commercialInfo, orders, actionItems } = data;
 
@@ -307,15 +332,22 @@ function fetchCustomerDetails(customerId) {
         <td>${order.orderNo}</td>
         <td>${order.material}</td>
         <td>${order.amount}</td>
-        <td>${order.goal}</td>
     <td class="action-cell">
-        <button class="btn small primary view-order" data-id="${order.id}" title="View">
+        <button class="btn small primary view-order"
+                data-id="${order.id}"
+                data-orderNo="${order.orderNo}"
+                data-material="${order.material}"
+                data-amount="${order.amount}"
+                data-goal="${order.goal}"
+                data-date="${formatDate(order.date)}"
+                data-orderFile="${order.orderFile}"
+                data-orderInvoice="${order.invoiceFile}"
+                data-orderFile="{{ url_for('static', filename='uploads/' ~ "${order.orderFile}") }}"
+                data-invoiceFile="{{ url_for('static', filename='uploads/' ~ "${order.invoiceFile}") }}"
+                title="View">
           <i class="fas fa-eye"></i>
         </button>
-        <button class="btn small secondary edit-order" data-id="${order.id}" title="Edit">
-          <i class="fas fa-edit"></i>
-        </button>
-        <form action="/delete_order" method="POST" id="deleteOrderForm" onsubmit="return confirmDelete(event)">
+        <form action="/delete_rder" method="POST" id="deleteOrderForm" onsubmit="return confirmDelete(event)">
           <input type="hidden" value="${order.id}" name="order_id">
           <button class="btn small danger delete-order" type="submit" title="Delete">
             <i class="fas fa-trash-alt"></i>
@@ -325,6 +357,8 @@ function fetchCustomerDetails(customerId) {
       `;
       ordersTable.appendChild(row);
     });
+
+    attachViewOrderListeners();
 
     const meetingsTable = document.getElementById('meetingsTable').querySelector('tbody');
     meetingsTable.innerHTML = '';
@@ -337,12 +371,15 @@ function fetchCustomerDetails(customerId) {
         <td>${formatDate(meeting.date)}</td>
         <td>${meeting.title}</td>
     <td class="action-cell">
-      <button class="btn small primary view-meeting" data-id="${meeting.id}" title="View">
-        <i class="fas fa-eye"></i>
-      </button>
-      <button class="btn small secondary edit-meeting" data-id="${meeting.id}" title="Edit">
-        <i class="fas fa-edit"></i>
-      </button>
+              <button class="btn small primary view-meeting"
+                data-id="${meeting.id}"
+                data-title="${meeting.title}"
+                data-attendees="${meeting.attendees}"
+                data-date="${formatDate(meeting.date)}"
+                data-summary="${meeting.summary}"
+                title="View">
+          <i class="fas fa-eye"></i>
+        </button>
       <form action="/delete_meeting" method="POST" id="deleteMeetingForm" onsubmit="return confirmDelete(event)">
         <input type="hidden" value="${meeting.id}" name="meeting_id">
         <button class="btn small danger delete-meeting" type="submit" title="Delete">
@@ -353,6 +390,8 @@ function fetchCustomerDetails(customerId) {
       `;
       meetingsTable.appendChild(row);
     });
+
+    attachViewMeetingListeners()
 
     const updatesTable = document.getElementById('updatesTable').querySelector('tbody');
       updatesTable.innerHTML = '';
@@ -365,12 +404,18 @@ function fetchCustomerDetails(customerId) {
           <td>${formatDate(update.date)}</td>
           <td>${update.title}</td>
     <td class="action-cell">
-      <button class="btn small primary view-update" data-id="${update.id}" title="View">
-        <i class="fas fa-eye"></i>
-      </button>
-      <button class="btn small secondary edit-update" data-id="${update.id}" title="Edit">
-        <i class="fas fa-edit"></i>
-      </button>
+        <button class="btn small primary view-update"
+                data-id="${update.id}"
+                data-title="${update.title}"
+                data-update="${update.content}"
+                data-date="${formatDate(update.date)}"
+                data-nextStep="${update.nextStep}"
+                data-file="${update.file}"
+                data-updateFile="{{ url_for('static', filename='uploads/' ~ "${update.file}") }}
+
+                title="View">
+          <i class="fas fa-eye"></i>
+        </button>
       <form action="/delete_update" method="POST" id="deleteUpdateForm" onsubmit="return confirmDelete(event)">
         <input type="hidden" value="${update.id}" name="update_id">
         <button class="btn small danger delete-update" type="submit" title="Delete">
@@ -381,6 +426,8 @@ function fetchCustomerDetails(customerId) {
         `;
         updatesTable.appendChild(row);
       });
+
+      attachViewUpdateListeners()
       
       companyInfoFields.forEach(field => {
         const fieldName = field.getAttribute('data-field');
@@ -458,11 +505,10 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
-
   // Close modal buttons
   closeModalButtons.forEach(button => {
     button.addEventListener('click', () => {
-      const modals = [addCustomerModal, addContactModal, editContactModal, addOrderModal, addMeetingModal, addUpdateModal];
+      const modals = [addCustomerModal, addContactModal, editContactModal, addOrderModal, addMeetingModal, addUpdateModal, viewOrderModal, viewMeetingModal, viewUpdateModal];
       
       modals.forEach(modal => {
         if (modal.style.display === 'block') {
@@ -477,6 +523,8 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     });
   });
+
+  
 
   document.getElementById("contactsListBtn").addEventListener("click", function () {
     fetch('/get_contacts')
@@ -903,6 +951,113 @@ function attachEditContactListeners() {
 
           // Show the modal
           document.getElementById("editContactModal").style.display = "block";
+      });
+  });
+}
+
+
+function attachViewOrderListeners() {
+  document.querySelectorAll(".view-order").forEach(button => {
+      button.addEventListener("click", function() {
+          // Extract contact details from the button's data attributes
+          const orderID = this.getAttribute("data-id");
+          const orderNo = this.getAttribute("data-orderNo");
+          const material = this.getAttribute("data-material");
+          const amount = this.getAttribute("data-amount");
+          const goal = this.getAttribute("data-goal");
+          const date = this.getAttribute("data-date");
+          const orderFile = this.getAttribute("data-orderFile");
+          const invoiceFile = this.getAttribute("data-orderInvoice");
+          const notes = this.getAttribute("data-notes");
+
+
+          // Populate the modal fields
+          document.getElementById("viewOrderMaterial").textContent = material; // Input field
+          document.getElementById("viewOrderNo").textContent = orderNo; 
+          document.getElementById("viewOrderAmount").textContent = amount;
+          document.getElementById("viewOrderGoal").textContent = goal;
+          document.getElementById("viewOrderDate").textContent = date; 
+          document.getElementById("viewOrderNotes").textContent = notes; 
+
+
+          const orderFileLink = document.getElementById("viewOrderFileLink");
+          const invoiceFileLink = document.getElementById("viewinvoiceFileLink");
+
+          if (orderFile && orderFile !== "null") {
+            orderFileLink.href = "/static/uploads/" + orderFile;
+            orderFileLink.style.display = "inline";
+        } else {
+            orderFileLink.textContent = "None";
+        }
+        
+        if (invoiceFile && invoiceFile !== "null") {
+            invoiceFileLink.href = "/static/uploads/" + invoiceFile;
+            invoiceFileLink.style.display = "inline";
+        } else {
+          invoiceFileLink.textContent = "None";
+
+        }
+
+          // Show the modal
+          document.getElementById("viewOrderModal").style.display = "block";
+      });
+  });
+}
+
+function attachViewMeetingListeners() {
+  document.querySelectorAll(".view-meeting").forEach(button => {
+      button.addEventListener("click", function() {
+          const meetingID = this.getAttribute("data-id");
+          const meetingTitle = this.getAttribute("data-title");
+          const Attendees = this.getAttribute("data-attendees");
+          const date = this.getAttribute("data-date");
+          const summary = this.getAttribute("data-summary");
+
+
+          // Populate the modal fields
+          document.getElementById("viewMeetingTitle").textContent = meetingTitle; // Input field
+          document.getElementById("viewMeetingAttendees").textContent = Attendees; 
+          document.getElementById("viewMeetingDate").textContent = date;
+          document.getElementById("viewMeetingSummary").textContent = summary;
+
+    
+          // Show the modal
+          document.getElementById("viewMeetingModal").style.display = "block";
+      });
+  });
+}
+
+
+function attachViewUpdateListeners() {
+  document.querySelectorAll(".view-update").forEach(button => {
+      button.addEventListener("click", function() {
+          const updateID = this.getAttribute("data-id");
+          const updateTitle = this.getAttribute("data-title");
+          const update = this.getAttribute("data-update");
+          const date = this.getAttribute("data-date");
+          const nextStep = this.getAttribute("data-nextStep");
+          const file = this.getAttribute("data-file");
+          const actions = this.getAttribute("data-actions");
+          const updateFile = this.getAttribute("data-updateFile");
+
+          // Populate the modal fields
+          document.getElementById("viewUpdateTitle").textContent =updateTitle; // Input field
+          document.getElementById("viewUpdateUpdate").textContent = update; 
+          document.getElementById("viewUpdateDate").textContent = date;
+          document.getElementById("viewUpdateNextStep").textContent = nextStep;
+          document.getElementById("viewUpdateActions").textContent = actions; 
+
+          const updateFileLink = document.getElementById("viewUpdateFileLink");
+
+          if (file !== "null") {
+            updateFileLink.href = "/static/uploads/" + file;
+            updateFileLink.style.display = "inline";
+        } else {
+          updateFileLink.textContent = "None";
+        }
+
+          // Show the modal
+          document.getElementById("viewUpdateModal").style.display = "block";
       });
   });
 }

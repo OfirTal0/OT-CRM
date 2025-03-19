@@ -720,8 +720,8 @@
   }
   
   .btn.small {
-    padding: 4px 8px;
-    font-size: 12px;
+    padding: 6px 10px; /* Keep the padding consistent */
+    font-size: 14px; /* Use the same font size as the default .btn size */
   }
   
   /* Status badges */
@@ -843,6 +843,11 @@ h1 a {
   ;
 }
 
+.add-action-style {
+ display:flex; 
+ justify-content:space-between;
+}
+
   
   .contact-card h3 {
     margin: 0;
@@ -892,8 +897,16 @@ h1 a {
   
   .modal-body {
     padding: 20px;
+
   }
+
   
+  #editContactForm {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
   .close-modal {
     font-size: 24px;
     font-weight: bold;
@@ -960,6 +973,12 @@ h1 a {
 
     }
 
+    .add-action-style {
+      display:flex; 
+      flex-direction: column;
+     }
+     
+
   }
   
 
@@ -998,7 +1017,8 @@ h1 a {
     .sidebar.open {
       transform: translateX(0);
     }
-  
+
+
     /* Push Main Content when Sidebar is Open */
     .main-content {
       margin-left: 0;
@@ -1046,7 +1066,11 @@ h1 a {
       flex-direction: column;
 
     }
-
+    .add-action-style {
+      display:flex; 
+      flex-direction: column;
+     }
+     
 
   }
   
@@ -1101,4 +1125,9 @@ h1 a {
 
     }
   
+    .add-action-style {
+      display:flex; 
+      flex-direction: column;
+     }
+     
   }
