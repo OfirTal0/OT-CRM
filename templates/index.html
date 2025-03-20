@@ -195,10 +195,10 @@
                   <label>Start Date:</label>
                   <span class="info-value" data-field="startDate"></span>
                 </div>
-                <div class="info-group">
+                <!-- <div class="info-group">
                   <label>NDA File:</label>
                   <span class="info-value" data-field="ndaFile"></span>
-                </div>
+                </div> -->
                 <div class="info-group">
                   <label>Lead:</label>
                   <span class="info-value" data-field="lead"></span>
@@ -258,7 +258,7 @@
                 </div>
                 <div class="info-group">
                     <label for="status">Status:</label>
-                    <select id="status" name="status" required>
+                    <select id="status" name="status" data-field="status" required>
                         <option value="Customer">Customer</option>
                         <option value="POC">POC</option>
                         <option value="Inital Contact">Initial Contact</option>
@@ -270,10 +270,10 @@
                   <label for="startDate">Start Date:</label>
                   <input type="date" id="startDate" name="startDate" class="info-value" data-field="startDate"/>
                 </div>
-                <div class="info-group">
+                <!-- <div class="info-group">
                   <label for="ndaFile">NDA File:</label>
                   <input type="file" id="ndaFile" name="ndaFile" class="info-value" data-field="ndaFile"/>
-                </div>
+                </div> -->
                 <div class="form-group">
                   <label for="lead">Lead:</label>
                   <select id="lead" name="lead" required>
@@ -466,10 +466,10 @@
                       <label for="start_date">Start Date:</label>
                       <input type="date" id="start_date" name="start_date" />
                     </div>
-                    <div class="form-group">
+                    <!-- <div class="form-group">
                       <label for="nda_file">Attach NDA File:</label>
                       <input type="file" name="nda_file" id="nda_file" accept=".pdf,.doc,.docx,.xls,.xlsx" />
-                    </div>
+                    </div> -->
                   </div>
                     <h3>Technical Data</h3>
                   <div class="info-grid">
@@ -693,7 +693,7 @@
       
                 <!-- Buttons -->
                 <div class="button-group">
-                  <button type="submit" class="btn primary">Submit Order</button>
+                  <button type="submit" class="btn primary">Submit Meeting</button>
                   <button type="button" class="btn secondary cancel-modal">Cancel</button>
                 </div>
               </form>
@@ -774,7 +774,7 @@
               <div id="action-items-container" class="action-items-container"></div>
                 <!-- Buttons -->
                 <div class="button-group">
-                  <button type="submit" class="btn primary">Submit Order</button>
+                  <button type="submit" class="btn primary">Submit Update</button>
                   <button type="button" class="btn secondary cancel-modal">Cancel</button>
                 </div>
               </form>

@@ -116,7 +116,7 @@ def login():
         # יצירת URL להפניה ל-Microsoft עם redirect_uri תקין
         auth_url = msal_app.get_authorization_request_url(
             SCOPES,
-            redirect_uri=url_for('auth_callback', _external=True,  _scheme='https'),  # הכוונה היא לחזור ל-/auth/callback
+            redirect_uri=url_for('auth_callback', _external=True,  _scheme='http'),  # הכוונה היא לחזור ל-/auth/callback
             state=company_name  # שמירת שם החברה כ-state
         )
         return redirect(auth_url)
@@ -148,7 +148,7 @@ def auth_callback():
         result = msal_app.acquire_token_by_authorization_code(
             request.args['code'],
             scopes=SCOPES,
-            redirect_uri=url_for('auth_callback', _external=True, _scheme='https')
+            redirect_uri=url_for('auth_callback', _external=True, _scheme='http')
         )
         access_token = result.get('access_token')
         if "refresh_token" in result:
@@ -346,14 +346,14 @@ def add_customer():
     status = request.form.get('status')
     sales_rep = request.form.get('sales_rep').title()
     start_date = request.form.get('start_date')
-    NDA_file = request.files.get('nda_file')
+    # NDA_file = request.files.get('nda_file')
     OT_company = session.get('company_name')
 
-    NDA_file_name = None
-    if NDA_file:
-        NDA_file_name = secure_filename(f"{name}_NDA_{NDA_file.filename}")
-        NDA_file_path = os.path.join(app.config['UPLOAD_FOLDER'], NDA_file_name)
-        NDA_file.save(NDA_file_path)
+    # NDA_file_name = None
+    # if NDA_file:
+    #     NDA_file_name = secure_filename(f"{name}_NDA_{NDA_file.filename}")
+    #     NDA_file_path = os.path.join(app.config['UPLOAD_FOLDER'], NDA_file_name)
+    #     NDA_file.save(NDA_file_path)
     
     line = request.form.get('line').capitalize()
     application = request.form.get('application').capitalize()
@@ -367,9 +367,10 @@ def add_customer():
 
     # Insert into the customers table
     customer_query = """
-    INSERT INTO customers (Name, Country, Address, Lead, Status, sales_rep, start_date, NDA_file, OT_company) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO customers (Name, Country, Address, Lead, Status, sales_rep, start_date
+    , OT_company) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
-    query(customer_query, (name, country, address, lead, status, sales_rep, start_date, NDA_file_name, OT_company))
+    query(customer_query, (name, country, address, lead, status, sales_rep, start_date, OT_company))
 
     # Insert into the technical table
     technical_query = """
@@ -603,22 +604,22 @@ def update_customer_details():
     else:
         customer_name = None
 
-    current_nda_file = query(f"SELECT nda_file FROM customers WHERE id = {customer_id} ")
-    current_file_data = current_nda_file[0][0]
+    # current_nda_file = query(f"SELECT nda_file FROM customers WHERE id = {customer_id} ")
+    # current_file_data = current_nda_file[0][0]
 
-    NDA_file_name = None
-    if NDA_file:
-        NDA_file_name = secure_filename(f"{name}_NDA_{NDA_file.filename}")
-        NDA_file_path = os.path.join(app.config['UPLOAD_FOLDER'], NDA_file_name)
-        NDA_file.save(NDA_file_path)
-        current_file_data = NDA_file_name
+    # NDA_file_name = None
+    # if NDA_file:
+    #     NDA_file_name = secure_filename(f"{name}_NDA_{NDA_file.filename}")
+    #     NDA_file_path = os.path.join(app.config['UPLOAD_FOLDER'], NDA_file_name)
+    #     NDA_file.save(NDA_file_path)
+    #     current_file_data = NDA_file_name
 
     # Update customer details
     query("""
         UPDATE customers
-        SET Name = ?, Country = ?, Address = ?, Status = ?, start_date = ?, NDA_file = ?, lead = ?, sales_rep = ?
+        SET Name = ?, Country = ?, Address = ?, Status = ?, start_date = ?, lead = ?, sales_rep = ?
         WHERE id = ?
-    """, (name, country, address, status, start_date, current_file_data, lead, sales_rep, customer_id))
+    """, (name, country, address, status, start_date, lead, sales_rep, customer_id))
 
     
     line = request.form.get('line').upper()
@@ -761,8 +762,8 @@ def add_action_items(action_items,item_category, meeting_id, customer_name):
     for item in action_items:
         query(action_item_query, (
             customer_name,
-            item['item'],
-            item['responsible'],
+            item['item'].title(),
+            item['responsible'].title(),
             item['due_date'],
             item['status'],
             item_category,

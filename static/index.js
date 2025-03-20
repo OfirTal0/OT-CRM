@@ -347,7 +347,7 @@ function fetchCustomerDetails(customerId) {
                 title="View">
           <i class="fas fa-eye"></i>
         </button>
-        <form action="/delete_rder" method="POST" id="deleteOrderForm" onsubmit="return confirmDelete(event)">
+        <form action="/delete_order" method="POST" id="deleteOrderForm" onsubmit="return confirmDelete(event)">
           <input type="hidden" value="${order.id}" name="order_id">
           <button class="btn small danger delete-order" type="submit" title="Delete">
             <i class="fas fa-trash-alt"></i>
