@@ -3,14 +3,15 @@
 ## Overview
 A Customer Relationship Management (CRM) application built using Python, Flask, HTML, CSS, JavaScript, and SQLite. This application allows businesses to efficiently manage their customers, orders, meetings, updates, and contacts.
 
+This system is ideal for small-scale requirements, offering a simple and easy-to-manage solution for handling a limited number of clients.
+
 ## Features
 - **Authentication via Azure Microsoft** for secure access.
 - **Easy Company Registration and Login** to streamline onboarding.
 - **Comprehensive Customer Management**, including:
   - Orders tracking
-  - Scheduling meetings
-  - Status updates
-  - Contact management
+  - Meeting summaries and customer updates
+  - Company and customer contact management
 - **Action Items Dashboard**, featuring:
   - Task statuses
   - Overdue task indicators
@@ -29,7 +30,7 @@ The CRM application is deployed and accessible via the following domain:
 [https://ot-crm.up.railway.app/](https://ot-crm.up.railway.app/)
 
 - **Register a new company** to explore the full functionality.
-- **Try for Free** by logging in as a test user to check out the system.
+- **Try for Free** button to allow users to check out the system.
 
 ## Installation & Setup
 To run the project locally:
@@ -46,14 +47,4 @@ To run the project locally:
    ```bash
    flask db upgrade
    ```
-4. Run the application:
-   ```bash
-   flask run
-   ```
-
-## Contribution
-If you’d like to contribute, feel free to fork the repository and submit a pull request!
-
-## License
-This project is licensed under the MIT License.
-
+4. Run
