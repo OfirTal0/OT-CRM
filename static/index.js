@@ -17,6 +17,8 @@ const addUpdateBtn = document.getElementById('addUpdateBtn');
 const viewOrderBtn = document.getElementById('view-order');
 const viewMeetingBtn = document.getElementById('view-meeting');
 const viewUpdateBtn = document.getElementById('view-update');
+const updateActionBtn = document.getElementById('updateActionBtn');
+
 
 
 function setupEventListeners() {
@@ -37,11 +39,21 @@ function setupEventListeners() {
     addMeetingModal.style.display = 'block';
   });
 
+  updateActionBtn.addEventListener('click', () => {
+    editActionItemModal.style.display = 'block';
+  });
+
   addUpdateBtn.addEventListener('click', () => {
     addUpdateModal.style.display = 'block';
   });
 
   // Fix: Single event listener for dynamically added elements
+  document.addEventListener('click', function(event) {
+    if (event.target && event.target.id === 'editContactBtn') {
+      editContactModal.style.display = 'block';
+    }
+  });
+
   document.addEventListener('click', function(event) {
     if (event.target && event.target.id === 'editContactBtn') {
       editContactModal.style.display = 'block';
@@ -267,7 +279,6 @@ function fetchCustomerDetails(customerId) {
       // Extract data
       const { customerInfo, contacts, meetings, updates, technicalInfo, commercialInfo, orders, actionItems } = data;
 
-
       // Update the customer view dynamically
       const customerSections = document.getElementById("customerSections");
       customerSections.classList.add('active');
@@ -373,6 +384,7 @@ function fetchCustomerDetails(customerId) {
     <td class="action-cell">
               <button class="btn small primary view-meeting"
                 data-id="${meeting.id}"
+                data-company="${meeting.company}"
                 data-title="${meeting.title}"
                 data-attendees="${meeting.attendees}"
                 data-date="${formatDate(meeting.date)}"
@@ -392,6 +404,94 @@ function fetchCustomerDetails(customerId) {
     });
 
     attachViewMeetingListeners()
+
+    function buildActionItemsListMeeting(actionItems) {
+      const actionsMeetingList = document.getElementById("viewMeetingActions");
+      actionsMeetingList.innerHTML = ''; // Clear any existing content
+      
+      // Create the table container
+      const tableMeetingActionContainer = document.createElement('div');
+      tableMeetingActionContainer.classList.add('table-container');
+      
+      // Create the table structure
+      const tableMeetingAction = document.createElement('table');
+      tableMeetingAction.classList.add('data-table'); // Apply the data-table class
+      
+      // Create the table header row
+      const tableHeader = document.createElement('thead');
+      tableHeader.innerHTML = `
+        <tr>
+          <th>Item</th>
+          <th>Responsible</th>
+          <th>Due Date</th>
+          <th>Status</th>
+        </tr>
+      `;
+      tableMeetingAction.appendChild(tableHeader);
+      
+      // Create the table body
+      const tableBody = document.createElement('tbody');
+      
+      // Filter the action items to only include those with category "meeting"
+      const meetingActionItems = actionItems.filter(actionItem => actionItem.category === "meeting");
+      console.log(meetingActionItems)
+      // Check if there are any meeting action items
+      if (meetingActionItems.length === 0) {
+        // If no action items with category "meeting", display a "No action items available" message
+        const noActionRow = document.createElement('tr');
+        noActionRow.innerHTML = `
+          <td colspan="4" style="text-align: center; padding: 15px;">No action items available</td>
+        `;
+        tableBody.appendChild(noActionRow);
+      } else {
+        // Loop through each filtered meeting action item and create a table row (<tr>)
+        meetingActionItems.forEach(actionItem => {
+          const row = document.createElement('tr');
+          
+          // Determine the status class based on the action item status
+          let statusClass = '';
+          switch(actionItem.status.toLowerCase()) {
+            case 'pending':
+              statusClass = 'status pending';
+              break;
+            case 'in-progress':
+              statusClass = 'status in-progress';
+              break;
+            case 'not-started':
+              statusClass = 'status not-started';
+              break;
+            case 'completed':
+              statusClass = 'status completed';
+              break;
+            default:
+              statusClass = 'status';
+              break;
+          }
+          
+          // Add item details to the table row
+          row.innerHTML = `
+            <td>${actionItem.item}</td>
+            <td>${actionItem.responsible}</td>
+            <td>${actionItem.dueDate}</td>
+            <td><span class="${statusClass}">${actionItem.status}</span></td>
+          `;
+          
+          tableBody.appendChild(row); // Add the row to the table body
+        });
+      }
+      
+      // Append the table body to the table
+      tableMeetingAction.appendChild(tableBody);
+      
+      // Append the table to the table container
+      tableMeetingActionContainer.appendChild(tableMeetingAction);
+      
+      // Append the table container to the list container
+      actionsMeetingList.appendChild(tableMeetingActionContainer);
+    }
+    
+    // Example of calling the function with an empty list (no action items)
+    buildActionItemsListMeeting(actionItems);
 
     const updatesTable = document.getElementById('updatesTable').querySelector('tbody');
       updatesTable.innerHTML = '';
@@ -427,26 +527,126 @@ function fetchCustomerDetails(customerId) {
         updatesTable.appendChild(row);
       });
 
-      attachViewUpdateListeners()
+    attachViewUpdateListeners()
+
+    function buildActionItemsListUpdate(actionItems) {
+      const actionsUpdateList = document.getElementById("viewUpdateActions");
+      actionsUpdateList.innerHTML = ''; // Clear any existing content
+      // Create the table container
+      const tableUpdateActionContainer = document.createElement('div');
+      tableUpdateActionContainer.classList.add('table-container');
+      
+      // Create the table structure
+      const tableUpdateAction = document.createElement('table');
+      tableUpdateAction.classList.add('data-table'); // Apply the data-table class
+      
+      // Create the table header row
+      const tableHeader = document.createElement('thead');
+      tableHeader.innerHTML = `
+        <tr>
+          <th>Item</th>
+          <th>Responsible</th>
+          <th>Due Date</th>
+          <th>Status</th>
+        </tr>
+      `;
+      tableUpdateAction.appendChild(tableHeader);
+      
+      // Create the table body
+      const tableBody = document.createElement('tbody');
+      
+      // Filter the action items to only include those with category "meeting"
+      const updateActionItems = actionItems.filter(actionItem => actionItem.category === "update");
+      // Check if there are any meeting action items
+      if (updateActionItems.length === 0) {
+        // If no action items with category "meeting", display a "No action items available" message
+        const noActionRow = document.createElement('tr');
+        noActionRow.innerHTML = `
+          <td colspan="4" style="text-align: center; padding: 15px;">No action items available</td>
+        `;
+        tableBody.appendChild(noActionRow);
+      } else {
+        // Loop through each filtered meeting action item and create a table row (<tr>)
+        updateActionItems.forEach(actionItem => {
+          const row = document.createElement('tr');
+          
+          // Determine the status class based on the action item status
+          let statusClass = '';
+          switch(actionItem.status.toLowerCase()) {
+            case 'pending':
+              statusClass = 'status pending';
+              break;
+            case 'in-progress':
+              statusClass = 'status in-progress';
+              break;
+            case 'not-started':
+              statusClass = 'status not-started';
+              break;
+            case 'completed':
+              statusClass = 'status completed';
+              break;
+            default:
+              statusClass = 'status';
+              break;
+          }
+          
+          // Add item details to the table row
+          row.innerHTML = `
+            <td>${actionItem.item}</td>
+            <td>${actionItem.responsible}</td>
+            <td>${actionItem.dueDate}</td>
+            <td><span class="${statusClass}">${actionItem.status}</span></td>
+          `;
+          
+          tableBody.appendChild(row); // Add the row to the table body
+        });
+      }
+      
+      // Append the table body to the table
+      tableUpdateAction.appendChild(tableBody);
+      
+      // Append the table to the table container
+      tableUpdateActionContainer.appendChild(tableUpdateAction);
+      
+      // Append the table container to the list container
+      actionsUpdateList.appendChild(tableUpdateActionContainer);
+    }
+    
+    // Example of calling the function with an empty list (no action items)
+    buildActionItemsListUpdate(actionItems);
       
       companyInfoFields.forEach(field => {
         const fieldName = field.getAttribute('data-field');
       
-        // Check if the customer object exists and has the required field
         if (customerInfo && customerInfo.hasOwnProperty(fieldName)) {
           if (fieldName === 'status') {
-            // Set the selected value for the status dropdown
-            const statusSelect = document.querySelector(`#companyInfo select[data-field="${fieldName}"]`);
-            if (statusSelect) {
-              statusSelect.value = customerInfo[fieldName] || ''; // Set the value for edit mode
-            }}
+              const statusSelect = document.querySelector(`#companyInfo select[data-field="${fieldName}"]`);
+              if (statusSelect) {
+                  statusSelect.value = customerInfo[fieldName] || ''; 
+              }
+          }
+  
+          if (fieldName === 'ndaFile') {
+              const ndaLink = document.getElementById("ndaFileLink"); // Get the <a> element
+  
+              if (customerInfo[fieldName]) {
+                  ndaLink.href = `/static/uploads/${customerInfo[fieldName]}`; // Correct path format
+                  ndaLink.style.display = "inline"; // Show the link
+                  ndaLink.textContent = "Download NDA"; // Set link text
+              } else {
+                  ndaLink.style.display = "none"; // Hide if no file
+              }
+          } else {
+              field.textContent = customerInfo[fieldName] || 'N/A'; 
+          }
           
-          field.textContent = customerInfo[fieldName] || 'N/A'; // For view mode
           // Also populate the input field in edit mode
           const inputField = document.querySelector(`#companyInfo input[data-field="${fieldName}"]`);
           if (inputField) {
             inputField.value = customerInfo[fieldName] || ''; // Set the value for edit mode
           }
+            
+
         } 
         // Check if the technical object exists and has the required field
         else if (technicalInfo && technicalInfo.hasOwnProperty(fieldName)) {
@@ -508,7 +708,7 @@ document.addEventListener("DOMContentLoaded", function () {
   // Close modal buttons
   closeModalButtons.forEach(button => {
     button.addEventListener('click', () => {
-      const modals = [addCustomerModal, addContactModal, editContactModal, addOrderModal, addMeetingModal, addUpdateModal, viewOrderModal, viewMeetingModal, viewUpdateModal];
+      const modals = [addCustomerModal, addContactModal, editContactModal, addOrderModal, editActionItemModal,  addMeetingModal, addUpdateModal, viewOrderModal, viewMeetingModal, viewUpdateModal];
       
       modals.forEach(modal => {
         if (modal.style.display === 'block') {
@@ -524,7 +724,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  
+
 
   document.getElementById("contactsListBtn").addEventListener("click", function () {
     fetch('/get_contacts')
@@ -562,9 +762,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Back Button to Return to Default View
 document.getElementById("backToMainView").addEventListener("click", function () {
-    document.getElementById("defaultView").style.display = "block";
-    document.getElementById("contactsView").style.display = "none";
+  document.getElementById("defaultView").style.display = "block";
+  document.getElementById("contactsView").style.display = "none";
 });
+
 
 editButtons.forEach(button => {
   button.addEventListener('click', (e) => {
@@ -605,7 +806,6 @@ editButtons.forEach(button => {
     };
   });
 });
-
 
 document.getElementById("editContactForm").addEventListener("submit", function(event) {
   event.preventDefault(); // Prevent the form from reloading the page
@@ -806,13 +1006,6 @@ document.getElementById("updateCustomerDetails").addEventListener("submit", func
   });
 });
 
-document.querySelector(".cancel-btn").addEventListener("click", function(event) {
-  event.preventDefault(); // Prevent any default behavior like form submission
-
-  // Switch back to view mode
-  document.querySelector(".edit-mode").classList.remove("edit-mode"); // Example: Hide edit mode
-  document.querySelector(".view-mode").classList.add("view-mode"); // Example: Show view mode
-});
 
 document.querySelectorAll(".add-action-item").forEach(button => {
   button.addEventListener("click", function() {
@@ -1037,7 +1230,6 @@ function attachViewUpdateListeners() {
           const date = this.getAttribute("data-date");
           const nextStep = this.getAttribute("data-nextStep");
           const file = this.getAttribute("data-file");
-          const actions = this.getAttribute("data-actions");
           const updateFile = this.getAttribute("data-updateFile");
 
           // Populate the modal fields
@@ -1045,7 +1237,6 @@ function attachViewUpdateListeners() {
           document.getElementById("viewUpdateUpdate").textContent = update; 
           document.getElementById("viewUpdateDate").textContent = date;
           document.getElementById("viewUpdateNextStep").textContent = nextStep;
-          document.getElementById("viewUpdateActions").textContent = actions; 
 
           const updateFileLink = document.getElementById("viewUpdateFileLink");
 

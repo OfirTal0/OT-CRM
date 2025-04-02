@@ -561,7 +561,7 @@
   .data-table th,
   .data-table td {
     padding: 12px 15px;
-    text-align: left;
+    text-align: left; 
     border-bottom: 1px solid var(--border-color);
   }
   
@@ -605,7 +605,7 @@
   }
   
   textarea {
-    min-height: 80px;
+    min-height: 300px;
     resize: vertical;
   }
   

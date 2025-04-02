@@ -16,6 +16,10 @@ import requests
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static', 'uploads')
+ALLOWED_EXTENSIONS = {"pdf", "doc", "docx"}
+
+def allowed_file(filename):
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Get the directory where app.py is located
@@ -116,7 +120,7 @@ def login():
         # יצירת URL להפניה ל-Microsoft עם redirect_uri תקין
         auth_url = msal_app.get_authorization_request_url(
             SCOPES,
-            redirect_uri=url_for('auth_callback', _external=True,  _scheme='https'),  # הכוונה היא לחזור ל-/auth/callback
+            redirect_uri=url_for('auth_callback', _external=True,  _scheme='http'),  # הכוונה היא לחזור ל-/auth/callback
             state=company_name  # שמירת שם החברה כ-state
         )
         return redirect(auth_url)
@@ -148,7 +152,7 @@ def auth_callback():
         result = msal_app.acquire_token_by_authorization_code(
             request.args['code'],
             scopes=SCOPES,
-            redirect_uri=url_for('auth_callback', _external=True, _scheme='https')
+            redirect_uri=url_for('auth_callback', _external=True, _scheme='http')
         )
         access_token = result.get('access_token')
         if "refresh_token" in result:
@@ -346,14 +350,14 @@ def add_customer():
     status = request.form.get('status')
     sales_rep = request.form.get('sales_rep').title()
     start_date = request.form.get('start_date')
-    # NDA_file = request.files.get('nda_file')
+    NDA_file = request.files.get('nda_file')
     OT_company = session.get('company_name')
 
-    # NDA_file_name = None
-    # if NDA_file:
-    #     NDA_file_name = secure_filename(f"{name}_NDA_{NDA_file.filename}")
-    #     NDA_file_path = os.path.join(app.config['UPLOAD_FOLDER'], NDA_file_name)
-    #     NDA_file.save(NDA_file_path)
+    NDA_file_name = None
+    if NDA_file:
+        NDA_file_name = secure_filename(f"{name}_NDA_{NDA_file.filename}")
+        NDA_file_path = os.path.join(app.config['UPLOAD_FOLDER'], NDA_file_name)
+        NDA_file.save(NDA_file_path)
     
     line = request.form.get('line').capitalize()
     application = request.form.get('application').capitalize()
@@ -367,10 +371,9 @@ def add_customer():
 
     # Insert into the customers table
     customer_query = """
-    INSERT INTO customers (Name, Country, Address, Lead, Status, sales_rep, start_date
-    , OT_company) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO customers (Name, Country, Address, Lead, Status, sales_rep, start_date,  NDA_file, OT_company) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
-    query(customer_query, (name, country, address, lead, status, sales_rep, start_date, OT_company))
+    query(customer_query, (name, country, address, lead, status, sales_rep, start_date, NDA_file_name, OT_company))
 
     # Insert into the technical table
     technical_query = """
@@ -604,22 +607,23 @@ def update_customer_details():
     else:
         customer_name = None
 
-    # current_nda_file = query(f"SELECT nda_file FROM customers WHERE id = {customer_id} ")
-    # current_file_data = current_nda_file[0][0]
+    current_nda_file = query(f"SELECT nda_file FROM customers WHERE id = {customer_id} ")
+    current_file_data = current_nda_file[0][0]
 
-    # NDA_file_name = None
-    # if NDA_file:
-    #     NDA_file_name = secure_filename(f"{name}_NDA_{NDA_file.filename}")
-    #     NDA_file_path = os.path.join(app.config['UPLOAD_FOLDER'], NDA_file_name)
-    #     NDA_file.save(NDA_file_path)
-    #     current_file_data = NDA_file_name
+   # Determine new NDA file name (if uploaded)
+    NDA_file_name = current_nda_file  # Default to existing file
+    if NDA_file and allowed_file(NDA_file.filename):
+        NDA_file_name = secure_filename(f"{name}_NDA_{NDA_file.filename}")
+        NDA_file_path = os.path.join(app.config['UPLOAD_FOLDER'], NDA_file_name)
+        NDA_file.save(NDA_file_path)
 
     # Update customer details
-    query("""
+    update_query = """
         UPDATE customers
-        SET Name = ?, Country = ?, Address = ?, Status = ?, start_date = ?, lead = ?, sales_rep = ?
+        SET Name = ?, Country = ?, Address = ?, Status = ?, start_date = ?, lead = ?, sales_rep = ?, nda_file = ?
         WHERE id = ?
-    """, (name, country, address, status, start_date, lead, sales_rep, customer_id))
+    """
+    query(update_query, (name, country, address, status, start_date, lead, sales_rep, NDA_file_name, customer_id))
 
     
     line = request.form.get('line').upper()
@@ -771,6 +775,38 @@ def add_action_items(action_items,item_category, meeting_id, customer_name):
             OT_company
         ))
 
+
+@app.route('/delete_action_item', methods=['POST'])
+def delete_action_item():
+    try:
+        action_id = request.form.get('action_id')
+        delete_action_items_query = "DELETE FROM action_items WHERE id = ?"
+        query(delete_action_items_query, (action_id,))
+        return redirect(url_for('index'))  # חזרה לדף הראשי
+    except Exception as e:
+        print("Error deleting meeting:", str(e))  # Log error
+        return jsonify({"success": False, "error": str(e)}), 500  # Return JSON error
+
+@app.route('/update_action_item', methods=['POST'])
+def update_action_item():
+    try:
+        action_id = request.form.get('action_id')
+        item = request.form.get('item').title()
+        responsible = request.form.get('responsible').title()
+        due_date = request.form.get('due_date')
+        status = request.form.get('status')
+
+        update_query = """
+            UPDATE action_items
+            SET item = ?, responsible = ?, due_date = ?, status = ?
+            WHERE id = ?
+        """
+        query(update_query, (item, responsible, due_date, status, action_id))
+        
+        return redirect(url_for('index'))  # Redirect to main page after update
+    except Exception as e:
+        print("Error updating action item:", str(e))  # Log error
+        return jsonify({"success": False, "error": str(e)}), 500  # Return JSON error
 
 
 @app.route('/delete_meeting', methods=['POST'])
